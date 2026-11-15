@@ -25,6 +25,17 @@ ZIP 안의 `pqc-discord` 폴더에는 스킬 실행기가 들어 있다. 앱과 
 
 **설정 화면에서 게시할 채널을 고르거나 웹훅 URL을 입력하지 않는다.** 현재 작업 중인 문제 채널은 제출 요청에서 정한다. 제출할 때 봇이 해당 채널의 자기 웹훅을 찾아 재사용하거나 생성하고, 게시물 상단에 `이름 · Codex`를 표시한다. 이를 위해 문제 채널에서 봇의 **웹훅 관리** 권한이 필요하다.
 
+## 채널 이름으로 요청하기
+
+기본 서버·카테고리는 스킬에 정해져 있으므로 채널 이름만 알려줘도 된다. 채널 링크나 ID를 제공해도 된다.
+
+```text
+$pqc-discord-workflow 기본 카테고리의 '문제-01' 채널 소스를 읽고,
+PQC 전환·검증 후 소스 ZIP과 보고서를 같은 채널에 제출해줘.
+```
+
+에이전트는 `read channels`로 실제 목록을 조회해 **이름이 정확히 일치하는 채널이 하나인 경우** ID를 찾아 사용한다. 다른 카테고리를 명시하면 `read channels --category-id CATEGORY_ID`로 그 범위를 확인한다. 부분 일치나 첫 번째 결과를 임의로 선택하지 않으며, 이름이 없거나 중복되거나 목록을 읽을 수 없을 때만 필요한 정보를 확인한다. 유일하게 확인되는 채널의 ID를 사용자에게 직접 복사해 달라고 요구하지 않는다. 확인한 채널 ID는 대화 조회·첨부 다운로드·미리보기·최종 제출에 계속 사용한다.
+
 ## 저장 위치와 갱신
 
 설정은 사용자 홈 디렉터리의 `~/.config/discord-channel-reader/`에 저장한다. `.env`는 봇 토큰, `publisher.json`은 표시 이름이다. 이전 고급 웹훅 설정이 있다면 함께 보존한다. macOS 파일 권한은 소유자 전용이며 Windows에서는 사용자 프로필 안에 저장한다. 토큰과 설정 파일은 Git에 올리지 않는다.
@@ -42,6 +53,8 @@ Codex는 설치된 실행기를 우선 사용한다. 아래 `<SKILL>`은 실제 
 <SKILL>/bin/pqc-discord submit preview --channel-id CHANNEL_ID --source-zip solution.zip --report report.md
 <SKILL>/bin/pqc-discord submit send --channel-id CHANNEL_ID --source-zip solution.zip --report report.md
 ```
+
+`CHANNEL_ID`는 에이전트가 채널 이름 조회 또는 제공된 링크·ID에서 확정한 값이다. 사용자가 이름으로 요청해도 CLI에는 확인한 ID를 전달한다.
 
 `preview`는 네트워크에 접속하지 않는다. `send`는 지정한 채널의 웹훅을 준비하고 두 파일을 게시한다. 실제 메시지 링크가 반환되어야 제출 성공으로 판단한다. [상세 제출 절차](submitting.md)를 참고한다.
 

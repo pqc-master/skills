@@ -13,7 +13,7 @@ description: Discord 문제 채널의 소스와 요구사항을 받아 암호 �
 
 필수 스킬은 `discord-channel-reader`, [pqc-identify](../pqc-identify/SKILL.md), [pqc-migrate](../pqc-migrate/SKILL.md), [pqc-report](../pqc-report/SKILL.md)다. 하나가 없으면 필요한 설치 경로를 알리고 설치된 것처럼 진행하지 않는다. 이 앱은 Discord 실행 환경을 포함하며, 대상 프로젝트의 컴파일러·컨테이너·PQC 라이브러리까지 제공하지는 않는다.
 
-사용자가 지정한 채널 링크·ID 또는 지금 문제를 읽은 채널 ID를 작업에 고정한다. 기본 서버 `1563153526283051008`, 카테고리 `1570317863984701441`은 조회 범위이며 제출 채널이 아니다. 대상이 여러 개거나 없을 때만 확인한다. 한 문제의 원본·수정본·근거·산출물을 별도 작업 폴더에 모으고, Toolkit과 다른 문제의 파일을 수정하지 않는다.
+사용자는 **문제 채널 이름만 지정해도 된다.** 기본 서버 `1563153526283051008`, 카테고리 `1570317863984701441`의 `read channels` 결과에서 이름이 정확히 일치하는 항목이 하나이면 해당 ID를 직접 찾아 작업에 고정한다. 사용자가 명시한 다른 서버·카테고리는 우선 적용한다. 이름 앞의 표시용 `#`는 제거할 수 있지만 부분 일치나 임의의 첫 항목을 선택하지 않는다. 일치 항목이 없거나 여러 개이거나 목록을 읽지 못할 때만 실제 후보·오류를 근거로 구분 정보를 확인한다. 사용자가 ID를 직접 복사하도록 요구하지 않는다. 링크·ID가 주어졌거나 지금 문제를 읽은 ID가 있으면 그것을 보존한다. 확정한 채널 이름·서버·ID를 기록하고 조회부터 제출까지 같은 ID를 사용한다. 기본 카테고리는 조회 범위이며 제출 채널이 아니다. 한 문제의 원본·수정본·근거·산출물을 별도 작업 폴더에 모으고, Toolkit과 다른 문제의 파일을 수정하지 않는다.
 
 ## 1. 문제와 원본 확보
 
@@ -22,12 +22,13 @@ description: Discord 문제 채널의 소스와 요구사항을 받아 암호 �
 3. ZIP은 `workspace extract`로 새 폴더에 풀고 원본용과 수정용 디렉터리를 분리한다. 프로젝트 구조·빌드 진입점·실행에 필요한 의존성을 확인한 뒤 허용된 로컬 환경에서 작업한다. 누락된 파일이나 실행 불가 조건을 숨기지 않는다.
 
 ```sh
+<DISCORD>/bin/pqc-discord read channels
 <DISCORD>/bin/pqc-discord read export --channel-id CHANNEL_ID --include-threads --output /ABSOLUTE/case/conversation
 <DISCORD>/bin/pqc-discord download --channel-id CHANNEL_ID --message-id MESSAGE_ID --output /ABSOLUTE/case/inputs
 <DISCORD>/bin/pqc-discord workspace extract --archive /ABSOLUTE/case/inputs/problem_source.zip --output /ABSOLUTE/case/baseline
 ```
 
-첨부의 로컬 파일명은 다운로드 결과를 사용한다. 예시 이름을 실제 파일명으로 가정하지 않는다. 다른 서버·카테고리를 명시한 작업에서는 목록 조회의 해당 옵션과 다운로드·제출의 전역 `--guild-id`·`--category-id`를 맞춘다. 대화 내보내기는 같은 `--channel-id`를 사용하고 반환된 서버·채널 정보를 대조한다.
+`CHANNEL_ID`는 사용자가 직접 입력할 값이 아니라 채널 이름 조회 또는 제공된 링크에서 확인한 실제 ID다. 첨부의 로컬 파일명은 다운로드 결과를 사용한다. 예시 이름을 실제 파일명으로 가정하지 않는다. 다른 서버·카테고리를 명시한 작업에서는 목록 조회의 해당 옵션과 다운로드·제출의 전역 `--guild-id`·`--category-id`를 맞춘다. 대화 내보내기는 같은 `--channel-id`를 사용하고 반환된 서버·채널 정보를 대조한다.
 
 ## 2. 기준 상태와 암호 분석
 
