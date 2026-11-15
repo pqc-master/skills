@@ -28,7 +28,14 @@ class WorkspaceTests(unittest.TestCase):
     def make_zip(self, names):
         with zipfile.ZipFile(self.archive, "w") as archive:
             for name in names:
-                archive.writestr(name, b"source")
+                # ZipInfo's constructor normalizes backslashes on Windows.
+                # Keep the hostile raw name in both ZIP headers on every OS.
+                item = zipfile.ZipInfo("placeholder")
+                item.filename = name
+                item.orig_filename = name
+                archive.writestr(item, b"source")
+        with zipfile.ZipFile(self.archive) as archive:
+            self.assertEqual([item.orig_filename for item in archive.infolist()], list(names))
 
     def test_complete_project_round_trip_keeps_assets_lockfiles_empty_dirs_and_exec(self):
         (self.project / ".github").mkdir()
