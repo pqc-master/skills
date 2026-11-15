@@ -27,4 +27,6 @@ jobs:
       - name: Run offline tests without Discord credentials
         run: python -m unittest discover -s skills/discord-channel-reader/tests -v
       - name: Check command-line entry point
-        run: python skills/discord-channel-reader/scripts/discord_reader.py --help
+        run: |
+          python skills/discord-channel-reader/scripts/discord_reader.py --help
+          python skills/discord-channel-reader/scripts/discord_publish.py --help

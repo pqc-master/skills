@@ -2,23 +2,25 @@
 
 Codex에서 사용할 수 있는 재사용 스킬 모음입니다. 각 스킬은 `skills/<skill-name>/SKILL.md`에 실행 절차와 사용 범위를 설명합니다.
 
-## Discord 채널·대화 조회
+## Discord 채널·대화 조회와 게시
 
-[`discord-channel-reader`](skills/discord-channel-reader/SKILL.md)는 카테고리의 채널 목록을 조회하고 채널 ID로 접근 가능한 전체 대화를 내보냅니다.
+[`discord-channel-reader`](skills/discord-channel-reader/SKILL.md)는 카테고리의 채널 목록을 조회하고 채널 ID로 접근 가능한 전체 대화를 내보냅니다. 게시를 요청하면 웹훅으로 `이름 · Codex`를 붙인 텍스트 메시지를 보냅니다.
 
 - 기본 카테고리의 채널 이름·ID·유형 조회, 다른 카테고리 ID도 지정 가능
 - 메시지 100개 단위로 빈 페이지까지 전체 기록 조회
 - 활성·보관된 접근 가능한 스레드 포함
 - 원본 `messages.jsonl`, 시간순 `transcript.md`, 완료 상태 `metadata.json` 저장
 - 권한·Message Content intent 확인, 호출 제한 대기, 부분 수집 표시
-- Discord API는 GET만 사용하며 게시·수정·삭제하지 않음
+- 조회·내보내기 명령은 GET만 사용
+- 작성자 이름·채널별 웹훅을 로컬에 저장하고 미리보기 후 명시적으로 게시
+- 게시 대상 재확인, 자동 멘션 비활성화, 결과 불명 시 자동 재전송 중단
 
-Python 3.9 이상이면 별도 Python 패키지 설치 없이 실행할 수 있습니다. 각 사용자는 자신의 Discord 봇 토큰을 설정해야 합니다. 저장소는 토큰이나 서버의 실제 채팅 기록을 제공하지 않습니다.
+Python 3.9 이상이면 별도 Python 패키지 설치 없이 실행할 수 있습니다. 조회에는 Discord 봇 토큰, 게시에는 채널별 웹훅 URL을 설정합니다. 별도 봇 서버는 필요 없습니다. 저장소는 토큰·웹훅 URL이나 서버의 실제 채팅 기록을 제공하지 않습니다.
 
 ## 기본 조회 대상
 
 - 서버 ID: `1563153526283051008`
-- 카테고리 ID: `1563154015389224960`
+- 카테고리 ID: `1570317863984701441`
 
 ID를 생략하면 위 대상을 사용합니다. 다른 서버·카테고리는 `--guild-id`·`--category-id`로 지정할 수 있습니다. 기본 ID는 조회 대상만 정하며 접근 권한을 부여하지 않습니다. 사용하는 봇에 해당 서버와 채널의 열람 권한이 있어야 합니다.
 
@@ -45,7 +47,7 @@ PYINSTALL
 
 ## 처음 연결하기
 
-설치 후 [봇 연결 가이드](skills/discord-channel-reader/references/setup.md)를 순서대로 진행합니다.
+조회·내보내기를 사용하려면 설치 후 [봇 연결 가이드](skills/discord-channel-reader/references/setup.md)를 순서대로 진행합니다. 글을 올리려면 아래 [웹훅 게시 설정](#작성자-이름을-붙여-게시하기)을 진행합니다. 게시만 할 때는 봇 토큰이 필요 없습니다.
 
 1. [봇 생성과 서버 초대](skills/discord-channel-reader/references/setup.md#봇-생성과-서버-초대): Discord에서 봇을 만들고 대상 서버에 초대합니다. 메시지 본문 접근 설정과 채널 읽기 권한도 부여합니다.
 2. [토큰 저장](skills/discord-channel-reader/references/setup.md#토큰-저장): 터미널에서 안내된 코드를 실행하고 토큰을 숨김 입력합니다. `~/.config/discord-channel-reader/.env`에 저장하며, 토큰을 채팅이나 GitHub에 붙이지 않습니다.
@@ -75,6 +77,24 @@ python3 skills/discord-channel-reader/scripts/discord_reader.py export \
 
 [봇 설정·권한·API 범위](skills/discord-channel-reader/references/setup.md)를 참고하세요. 기존 Fiesta relay 설정은 선택적으로 재사용할 수 있습니다. 일반 서버 사용에 Fiesta 설치는 필요 없습니다.
 
+## 작성자 이름을 붙여 게시하기
+
+[웹훅 게시 가이드](skills/discord-channel-reader/references/publishing.md)에 웹훅 생성부터 이름 설정·미리보기·전송까지 정리했습니다. 스킬을 설치한 뒤 아래 명령을 사용자 터미널에서 실행하면 웹훅 URL을 숨김 입력으로 받습니다. `민영`은 원하는 이름으로 바꾸세요.
+
+```sh
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" setup --name "민영"
+```
+
+설정은 `~/.config/discord-channel-reader/publisher.json`에 저장됩니다. 설정 완료 시 출력된 채널 ID로 게시 대상을 지정합니다. 이름만 바꿀 때는 URL을 다시 입력할 필요 없이 다음 명령을 사용합니다.
+
+```sh
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" profile --name "철수"
+```
+
+이후 Codex에서 `$discord-channel-reader message.md 내용을 채널 ID 234567890123456789에 올려줘`처럼 요청합니다. 예시 채널 ID를 실제 값으로 바꾸세요. 미리보기만 요청하면 보내지 않습니다.
+
+일반 텍스트 채널에 텍스트 한 건을 보내며, 첨부·포럼·스레드 게시는 지원하지 않습니다. 표시 이름은 사용자가 정한 이름으로 실제 Discord 사용자 인증을 의미하지 않습니다. 웹훅 URL은 게시 권한이 있으므로 채팅·GitHub에 올리지 않습니다.
+
 ## 전체 기록의 범위
 
 봇이 열람할 수 있는 현존 메시지에 한정됩니다. 삭제된 메시지·이전 편집본·접근 불가 비공개 스레드는 복원하지 않습니다. 첨부는 메타데이터와 URL만 저장하며 파일 자체는 내려받지 않습니다. 시작 이후 새 메시지는 제외하지만 수집 중 편집·삭제까지 원자적으로 고정하지는 못합니다.
@@ -89,7 +109,7 @@ python3 skills/discord-channel-reader/scripts/discord_reader.py export \
 python3 -m unittest discover -s skills/discord-channel-reader/tests -v
 ```
 
-Python 3.9/macOS에서 26개 테스트가 통과했습니다. GitHub Actions는 Ubuntu 24.04·macOS의 Python 3.9·3.13에서 같은 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows와 실제 대상 채널의 전체 내보내기는 별도 검증이 필요합니다.
+GitHub Actions는 Ubuntu 24.04·macOS의 Python 3.9·3.13에서 조회·게시 오프라인 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows 실행, 실제 대상 채널의 전체 내보내기, 실제 웹훅 게시는 **NOT TESTED**입니다.
 
 ## 기여 및 라이선스
 

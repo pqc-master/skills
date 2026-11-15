@@ -80,7 +80,7 @@ class ListingCLITests(unittest.TestCase):
     def test_id_free_listing_uses_configured_server_and_category(self):
         for command in ("categories", "channels"):
             with self.subTest(command=command):
-                self.run_listing(command, "1563153526283051008", "1563154015389224960")
+                self.run_listing(command, "1563153526283051008", "1570317863984701441")
 
     def test_explicit_ids_override_defaults(self):
         for command in ("categories", "channels"):

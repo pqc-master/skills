@@ -1,8 +1,10 @@
 # 연결 설정과 조회 범위
 
+이 문서는 봇 토큰을 사용하는 조회·내보내기 설정이다. 작성자 이름을 붙여 글을 올리려면 [웹훅 게시 가이드](publishing.md)를 사용한다.
+
 ## 기본 대상과 인증
 
-`categories`는 서버 `1563153526283051008`, `channels`는 카테고리 `1563154015389224960`을 기본으로 사용한다. `--guild-id` 또는 `--category-id`를 명시하면 해당 값을 사용한다. `export`에는 선택한 `--channel-id`가 항상 필요하다.
+`categories`는 서버 `1563153526283051008`, `channels`는 카테고리 `1570317863984701441`을 기본으로 사용한다. `--guild-id` 또는 `--category-id`를 명시하면 해당 값을 사용한다. `export`에는 선택한 `--channel-id`가 항상 필요하다.
 
 이 ID들은 조회 대상이며 인증 정보가 아니다. 각 사용자는 자신의 봇 토큰을 설정하고 해당 서버·채널의 열람 권한을 받아야 한다.
 
@@ -14,7 +16,7 @@
 2. 왼쪽 **Bot → Privileged Gateway Intents**에서 **Message Content Intent**를 켜고 저장한다. 메시지 본문·첨부 등을 가져오기 위한 설정이며, 앱 규모에 따라 별도 승인이 필요할 수 있다.
 3. **Installation**에서 **Guild Install**을 활성화한다. **Install Link**는 **Discord Provided Link**로 선택하고, **Default Install Settings → Guild Install**에서 scope는 `bot`, 권한은 **View Channels**와 **Read Message History**로 설정한다.
 4. **Install Link**를 열어 대상 서버에 봇을 추가한다. 기본 서버 ID는 `1563153526283051008`이다. 초대하는 계정에 해당 서버의 관리 권한이 있어야 한다.
-5. 대상 카테고리 `1563154015389224960`과 조회할 채널에서 봇의 **채널 보기·메시지 기록 읽기**를 허용한다. 비공개 카테고리나 별도 권한이 설정된 채널은 초대할 때 부여한 권한만으로 접근되지 않을 수 있다.
+5. 대상 카테고리 `1570317863984701441`과 조회할 채널에서 봇의 **채널 보기·메시지 기록 읽기**를 허용한다. 비공개 카테고리나 별도 권한이 설정된 채널은 초대할 때 부여한 권한만으로 접근되지 않을 수 있다.
 6. 토큰이 없다면 Developer Portal의 **Bot → Reset Token**에서 발급받는다. 이미 발급받아 보관한 토큰이 있으면 그대로 사용한다. 재발급하면 이전 토큰은 사용할 수 없다.
 
 [공식 봇 생성·설치 안내](https://docs.discord.com/developers/quick-start/getting-started)와 [Message Content Intent 설명](https://docs.discord.com/developers/events/gateway#message-content-intent)을 참고한다. 스레드는 부모 채널의 권한과 비공개 스레드의 가시성에 영향을 받는다. 음성·스테이지 채널의 텍스트 대화에는 **Connect** 권한도 필요하다. 이 스킬에 서버 관리자 권한을 일괄 부여할 필요는 없다.
