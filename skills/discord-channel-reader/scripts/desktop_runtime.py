@@ -10,7 +10,7 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "0.2.0"
+VERSION = "0.2.1"
 SKILL_NAME = "discord-channel-reader"
 SKILL_NAMES = (SKILL_NAME, "pqc-discord-workflow", "pqc-identify", "pqc-migrate", "pqc-report")
 MANIFEST_NAME = ".desktop-install.json"

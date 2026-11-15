@@ -35,7 +35,7 @@ def _safe_error(error):
 
 
 class SetupService:
-    """Headless settings service; all returned values are safe to display."""
+    """Settings status omits credentials; current-token access is explicit."""
 
     def __init__(self, config_dir=None, reader_factory=None, webhook_api=None,
                  environ=None, installer=None, use_legacy=None):
@@ -58,6 +58,13 @@ class SetupService:
             if legacy.exists() or legacy.is_symlink():
                 return reader.load_token(str(legacy), environ=self.environ)
         return None, None
+
+    def current_bot_token(self):
+        """Read the effective credential only for the user's explicit reveal action."""
+        try:
+            return self._load_bot()[0]
+        except Exception:
+            raise DesktopError("현재 봇 토큰을 읽지 못했습니다. 설정 파일과 권한을 확인하세요.") from None
 
     def inspect(self):
         state = {
@@ -243,10 +250,13 @@ class DiscordDesktop:
         self.busy = False
         self.tk = tk
         self.root.title("PQC Discord")
-        self.root.geometry("760x620")
-        self.root.minsize(660, 560)
+        self.root.geometry("760x660")
+        self.root.minsize(660, 600)
         self.root.protocol("WM_DELETE_WINDOW", self._close)
         self.token = tk.StringVar()
+        self.current_token = tk.StringVar()
+        self.has_current_token = False
+        self.token_visible = False
         self.name = tk.StringVar()
         self.bot_status = tk.StringVar()
         self.name_status = tk.StringVar()
@@ -262,14 +272,23 @@ class DiscordDesktop:
         ttk.Label(frame, text=subtitle).grid(row=1, column=0, sticky="w", pady=(6, 12))
         ttk.Label(frame, text=f"서버  {DEFAULT_GUILD_ID}     카테고리  {DEFAULT_CATEGORY_ID}").grid(row=2, column=0, sticky="w", pady=(0, 16))
         ttk.Label(frame, text="봇 토큰 · 문제 채널 조회와 결과 게시").grid(row=3, column=0, sticky="w")
-        self.token_entry = ttk.Entry(frame, textvariable=self.token, show="*")
-        self.token_entry.grid(row=4, column=0, sticky="ew", pady=(5, 4))
+        tokens = ttk.Frame(frame)
+        tokens.grid(row=4, column=0, sticky="ew", pady=(5, 4))
+        tokens.columnconfigure(1, weight=1)
+        ttk.Label(tokens, text="현재 토큰").grid(row=0, column=0, sticky="w", padx=(0, 10))
+        self.current_token_entry = ttk.Entry(tokens, textvariable=self.current_token, show="*", state="readonly")
+        self.current_token_entry.grid(row=0, column=1, sticky="ew")
+        self.token_view_button = ttk.Button(tokens, text="보기", command=self._toggle_current_token, width=7)
+        self.token_view_button.grid(row=0, column=2, padx=(8, 0))
+        ttk.Label(tokens, text="새 토큰").grid(row=1, column=0, sticky="w", padx=(0, 10), pady=(6, 0))
+        self.token_entry = ttk.Entry(tokens, textvariable=self.token, show="*")
+        self.token_entry.grid(row=1, column=1, columnspan=2, sticky="ew", pady=(6, 0))
         ttk.Label(frame, textvariable=self.bot_status, wraplength=690).grid(row=5, column=0, sticky="w", pady=(0, 12))
         ttk.Label(frame, text="표시 이름 · 게시물 상단에 ‘이름 · Codex’로 표시됩니다").grid(row=6, column=0, sticky="w")
         self.name_entry = ttk.Entry(frame, textvariable=self.name)
         self.name_entry.grid(row=7, column=0, sticky="ew", pady=(5, 12))
         ttk.Label(frame, textvariable=self.name_status, wraplength=690).grid(row=8, column=0, sticky="w")
-        ttk.Label(frame, text="봇 토큰은 비워 두면 기존 값을 유지합니다. 결과는 작업한 문제 채널에 제출하며 봇에 ‘웹후크 관리’ 권한이 필요합니다. 설정 중에는 글을 올리지 않습니다.", wraplength=690).grid(row=9, column=0, sticky="w", pady=(6, 12))
+        ttk.Label(frame, text="현재 토큰은 ‘보기’로 확인할 수 있습니다. 새 토큰을 비워 두면 기존 값을 유지합니다. 결과는 작업한 문제 채널에 제출하며 봇에 ‘웹후크 관리’ 권한이 필요합니다. 설정 중에는 글을 올리지 않습니다.", wraplength=690).grid(row=9, column=0, sticky="w", pady=(6, 12))
         actions = ttk.Frame(frame)
         actions.grid(row=10, column=0, sticky="ew", pady=(0, 12))
         self.save_button = ttk.Button(actions, text="저장하고 연결 확인", command=self._save)
@@ -295,12 +314,45 @@ class DiscordDesktop:
         self.root.after(100, self._poll_events)
 
     def _refresh_state(self):
+        self._hide_current_token()
         state = self.service.inspect()
+        self.has_current_token = bool(state.get("bot_source"))
+        self._hide_current_token()
+        self.token_view_button.state(["disabled"] if self.busy or not self.has_current_token else ["!disabled"])
         self.bot_status.set(state["bot_status"])
         self.name_status.set(state["publisher_status"])
         self.name.set(state["display_name"])
         for error in state["errors"]:
             self._append(error)
+
+    def _hide_current_token(self):
+        self.current_token.set("********" if self.has_current_token else "")
+        self.current_token_entry.configure(show="*")
+        self.token_view_button.configure(text="보기")
+        self.token_visible = False
+
+    def _toggle_current_token(self):
+        if self.busy:
+            return
+        if self.token_visible:
+            self._hide_current_token()
+            return
+        self._hide_current_token()
+        try:
+            token = self.service.current_bot_token()
+        except Exception as error:
+            self._append(_safe_error(error))
+            return
+        if token is None:
+            self.has_current_token = False
+            self._hide_current_token()
+            self.token_view_button.state(["disabled"])
+            self._append("현재 설정된 봇 토큰이 없습니다.")
+            return
+        self.current_token.set(token)
+        self.current_token_entry.configure(show="")
+        self.token_view_button.configure(text="숨기기")
+        self.token_visible = True
 
     def _append(self, text):
         self.log.configure(state="normal")
@@ -310,8 +362,11 @@ class DiscordDesktop:
 
     def _set_busy(self, busy):
         self.busy = busy
+        if busy:
+            self._hide_current_token()
         for widget in (self.token_entry, self.name_entry, self.save_button):
             widget.state(["disabled"] if busy else ["!disabled"])
+        self.token_view_button.state(["disabled"] if busy or not self.has_current_token else ["!disabled"])
         self.install_button.state(["disabled"] if busy or self.service.installer is None else ["!disabled"])
 
     def _start(self, kind, operation):
@@ -331,6 +386,7 @@ class DiscordDesktop:
         if self.busy:
             return
         token, name = self.token.get(), self.name.get()
+        self._hide_current_token()
         self.token.set("")
         self._start("save", lambda: self.service.save(token, name))
 
@@ -383,6 +439,7 @@ class DiscordDesktop:
             self._append("브라우저를 열지 못했습니다. GitHub의 pqc-master/skills 설정 가이드를 확인하세요.")
 
     def _close(self):
+        self._hide_current_token()
         self.closed = True
         self.root.destroy()
 

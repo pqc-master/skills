@@ -31,7 +31,7 @@ python packaging/build_desktop.py
 
 Python으로 소스 스킬을 설치하려면 저장소에서 `python3 skills/discord-channel-reader/scripts/desktop_runtime.py --source`를 실행한다. `--target-skills-dir PATH`로 설치 위치를 지정할 수 있다. 이 방법은 실행 환경을 포함하지 않으므로 Python 3.9 이상이 필요하다. 기존 실행 파일 설치에 새 지침만 섞지 않도록, 실행 파일로 설치된 위치의 소스 갱신은 거부한다. 그런 설치는 새 앱으로 갱신한다.
 
-CLI에는 첨부를 받는 `download`, 프로젝트 압축을 다루는 `workspace`, 결과를 올리는 `submit` 명령을 포함한다. 작업할 때 지정한 채널에 `sourcecode.zip`과 `report.md`를 함께 올리고, 봇이 관리하는 해당 채널의 웹훅으로 `이름 · Codex`를 작성자 헤더에 표시한다. `submit preview`는 파일과 이름만 로컬에서 확인한다. 실제 `submit send`는 봇 인증 후 채널·카테고리·권한을 확인하며, 필요하면 웹훅을 생성한다. 빌드·설치 과정에서는 웹훅을 만들거나 파일을 게시하지 않는다.
+CLI에는 첨부를 받는 `download`, 프로젝트 압축을 다루는 `workspace`, 결과를 올리는 `submit` 명령을 포함한다. 작업할 때 지정한 채널에 표시 이름을 붙인 `sourcecode_이름.zip`과 `report_이름.md`를 함께 올리고, 봇이 관리하는 해당 채널의 웹훅으로 `이름 · Codex`를 작성자 헤더에 표시한다. `submit preview`는 파일과 실제 첨부명을 로컬에서 확인한다. 실제 `submit send`는 봇 인증 후 채널·카테고리·권한을 확인하며, 필요하면 웹훅을 생성한다. 빌드·설치 과정에서는 웹훅을 만들거나 파일을 게시하지 않는다.
 
 ## 검증과 결과물
 

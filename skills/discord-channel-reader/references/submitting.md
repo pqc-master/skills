@@ -20,7 +20,7 @@
 <SKILL>/bin/pqc-discord submit preview --channel-id CHANNEL_ID --source-zip ./solution.zip --report ./report.md
 ```
 
-소스 설치에서는 `python3 <SKILL>/scripts/discord_submit.py preview ...`를 사용한다. 미리보기는 네트워크·봇 토큰 조회 없이 표시 이름, 대상 ID, 두 파일의 크기·해시와 메시지 내용을 보여준다. 채널 권한 확인이나 웹훅 생성은 하지 않는다.
+소스 설치에서는 `python3 <SKILL>/scripts/discord_submit.py preview ...`를 사용한다. 미리보기는 네트워크·봇 토큰 조회 없이 표시 이름, 대상 ID, 실제 첨부 파일 이름, 두 파일의 크기·해시와 메시지 내용을 보여준다. 채널 권한 확인이나 웹훅 생성은 하지 않는다.
 
 ## 제출
 
@@ -30,7 +30,11 @@
 <SKILL>/bin/pqc-discord submit send --channel-id CHANNEL_ID --source-zip ./solution.zip --report ./report.md
 ```
 
-표시 이름은 게시물 상단의 `이름 · Codex`에 반영된다. 두 파일은 한 메시지에 **`sourcecode.zip`과 `report.md`**라는 이름으로 첨부하며 원본 바이트는 보존한다. 일반 텍스트 채널과 이미 존재하는 스레드를 지원한다. 포럼·미디어는 기존 게시글의 스레드 ID를 사용하며 부모 채널에는 직접 제출하지 않는다. 새 채널·스레드를 만들지 않는다.
+표시 이름은 게시물 상단의 `이름 · Codex`와 첨부 파일 이름에 반영된다. 표시 이름이 `민영`이면 두 파일은 한 메시지에 **`sourcecode_민영.zip`과 `report_민영.md`**로 첨부된다. 미리보기와 실제 제출은 같은 이름을 사용하며 로컬 원본 파일의 경로·이름·바이트·해시는 바꾸지 않는다.
+
+첨부 파일 이름에서는 한글을 유지하고, 공백과 경로 구분자 및 `<>:"/\\|?*`를 `_`로 바꾼다. 이름 앞뒤의 점·밑줄을 제거한 뒤 빈 이름이 되면 `user`를 쓴다. 이 처리는 첨부 이름에만 적용하며 게시물 상단의 표시 이름은 바꾸지 않는다. 제어 문자나 보이지 않는 형식 문자가 포함된 표시 이름은 기존 규칙대로 거부한다.
+
+일반 텍스트 채널과 이미 존재하는 스레드를 지원한다. 포럼·미디어는 기존 게시글의 스레드 ID를 사용하며 부모 채널에는 직접 제출하지 않는다. 새 채널·스레드를 만들지 않는다.
 
 명령은 먼저 봇·서버·카테고리·대상 채널과 권한을 확인한다. 봇이 해당 채널에서 만든 `PQC Results` 웹훅만 재사용하고, 없으면 만든다. 다른 사람이나 다른 봇의 웹훅을 변경·삭제하지 않는다. 웹훅의 토큰은 파일·로그·결과에 저장하지 않는다. `allowed_mentions`를 비활성화해 자동 멘션 알림을 보내지 않는다.
 
@@ -48,6 +52,7 @@
 확인일: 2026-11-15. 실제 제출은 **NOT TESTED**이며 테스트에는 가상 파일·응답만 사용한다.
 
 - [Uploading Files](https://docs.discord.com/developers/reference#uploading-files): multipart `payload_json`, `files[n]`, 첨부 파일 기본 한도.
+- [RFC 7578 §4.2](https://www.rfc-editor.org/rfc/rfc7578.html#section-4.2): multipart 파일 이름과 비ASCII 이름의 UTF-8 처리.
 - [Webhook API](https://docs.discord.com/developers/resources/webhook): 채널별 조회·생성, 작성자 이름 지정, `wait=true`, 스레드 ID.
 - [Message API](https://docs.discord.com/developers/resources/message#create-message): 첨부 메타데이터와 전체 요청 크기.
 - [Permissions](https://docs.discord.com/developers/topics/permissions): 채널·웹훅 관리 권한.

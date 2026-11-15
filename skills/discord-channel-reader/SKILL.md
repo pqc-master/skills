@@ -76,7 +76,7 @@ PQC 문제의 분석·전환·검증·벤치마크·전체 프로젝트 제출�
 <SKILL>/bin/pqc-discord submit send --channel-id CHANNEL_ID --source-zip /ABSOLUTE/solution.zip --report /ABSOLUTE/report.md
 ```
 
-제출 대상의 서버·카테고리와 웹훅 관리 권한을 검증한다. 다른 범위를 사용자가 명시한 경우 제출 스크립트의 전역 `--guild-id`·`--category-id`를 하위 명령보다 앞에 지정한다. 일반 채널과 기존 스레드를 지원하며 새 문제 채널·스레드는 만들지 않는다. 파일당 20 MiB, 전체 요청 25 MiB 한도를 넘으면 자동 분할하지 말고 파일을 줄인다. 첨부는 `sourcecode.zip`, `report.md`로 표시된다.
+제출 대상의 서버·카테고리와 웹훅 관리 권한을 검증한다. 다른 범위를 사용자가 명시한 경우 제출 스크립트의 전역 `--guild-id`·`--category-id`를 하위 명령보다 앞에 지정한다. 일반 채널과 기존 스레드를 지원하며 새 문제 채널·스레드는 만들지 않는다. 파일당 20 MiB, 전체 요청 25 MiB 한도를 넘으면 자동 분할하지 말고 파일을 줄인다. 첨부는 설정한 표시 이름을 붙여 `sourcecode_이름.zip`, `report_이름.md`로 표시된다. 실제 첨부명은 `preview`에서 확인한다.
 
 ## 기타 게시와 신뢰 경계
 

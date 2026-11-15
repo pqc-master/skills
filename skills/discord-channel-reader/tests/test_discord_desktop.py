@@ -130,6 +130,53 @@ class DesktopSettingsTests(unittest.TestCase):
         self.assertEqual(self.factory.tokens, [])
         self.assertEqual(self.api.calls, [])
 
+    def test_explicit_token_view_reads_local_value_without_output_network_or_writes(self):
+        self.seed()
+        original_bot = self.bot_path.read_bytes()
+        original_publisher = self.publisher_path.read_bytes()
+        service = self.service()
+        out, err = io.StringIO(), io.StringIO()
+        with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err), \
+                mock.patch.object(D.setup, "save_bot_token", side_effect=AssertionError("Viewing must not save")), \
+                mock.patch.object(D.publisher, "save_config", side_effect=AssertionError("Viewing must not save")):
+            token = service.current_bot_token()
+        self.assertEqual(token, OLD_TOKEN)
+        self.assertEqual(out.getvalue() + err.getvalue(), "")
+        self.assertEqual(self.factory.tokens, [])
+        self.assertEqual(self.api.calls, [])
+        self.assertEqual(self.bot_path.read_bytes(), original_bot)
+        self.assertEqual(self.publisher_path.read_bytes(), original_publisher)
+        self.capture(service.inspect)
+
+    def test_explicit_token_view_uses_the_same_source_priority_as_authentication(self):
+        legacy = self.home / ".fiesta-discord/.env"
+        self.write_private(legacy, "DISCORD_BOT_TOKEN=" + OLD_TOKEN + "\n")
+        service = D.SetupService(config_dir=self.config_dir, environ={}, use_legacy=True)
+        self.assertEqual(service.current_bot_token(), OLD_TOKEN)
+        self.write_private(self.bot_path, "DISCORD_BOT_TOKEN=" + NEW_TOKEN + "\n")
+        self.assertEqual(service.current_bot_token(), NEW_TOKEN)
+        for variable in ("DISCORD_BOT_TOKEN", "FIESTA_RELAY_BOT_TOKEN"):
+            with self.subTest(variable=variable):
+                service = D.SetupService(config_dir=self.config_dir, environ={variable: ENV_TOKEN}, use_legacy=True)
+                self.assertEqual(service.current_bot_token(), ENV_TOKEN)
+                self.capture(service.inspect)
+
+    def test_explicit_token_view_missing_state_does_not_create_configuration(self):
+        service = self.service()
+        self.assertIsNone(service.current_bot_token())
+        self.assertFalse(self.config_dir.exists())
+        self.assertEqual(self.factory.tokens, [])
+        self.assertEqual(self.api.calls, [])
+
+    def test_explicit_token_view_sanitizes_errors_with_credential_values(self):
+        service = self.service()
+        for error in (OSError(OLD_TOKEN), D.reader.ReaderError(NEW_TOKEN)):
+            with self.subTest(error_type=type(error).__name__), \
+                    mock.patch.object(service, "_load_bot", side_effect=error):
+                with self.assertRaises(D.DesktopError) as caught:
+                    service.current_bot_token()
+                self.assert_no_secrets(str(caught.exception))
+
     def test_blank_fields_preserve_saved_credentials_and_webhook_bindings(self):
         self.seed()
         original_bot = self.bot_path.read_bytes()
@@ -330,14 +377,30 @@ class DesktopSmokeTests(unittest.TestCase):
 
 
 class DesktopPrimaryFormTests(unittest.TestCase):
-    def test_save_uses_only_bot_token_and_name_without_channel_or_webhook_field(self):
+    def window(self):
         window = object.__new__(D.DiscordDesktop)
         window.busy = False
-        window.token = mock.Mock()
-        window.token.get.return_value = NEW_TOKEN
-        window.name = mock.Mock()
+        window.closed = False
+        window.has_current_token = True
+        window.token_visible = False
+        for name in ("token", "name", "current_token", "token_entry", "current_token_entry",
+                     "token_view_button", "name_entry", "save_button", "install_button", "bot_status",
+                     "name_status", "root"):
+            setattr(window, name, mock.Mock())
+        window.token.get.return_value = ""
         window.name.get.return_value = "민영"
-        window.service = mock.Mock()
+        window.service = mock.Mock(installer=lambda: None)
+        window.service.current_bot_token.return_value = OLD_TOKEN
+        window.service.inspect.return_value = {
+            "bot_status": "저장된 봇", "bot_source": "synthetic settings file",
+            "publisher_status": "저장된 이름", "display_name": "민영", "errors": [],
+        }
+        window._append = mock.Mock()
+        return window
+
+    def test_save_uses_only_bot_token_and_name_without_channel_or_webhook_field(self):
+        window = self.window()
+        window.token.get.return_value = NEW_TOKEN
         started = []
         def start(kind, operation):
             started.append(kind)
@@ -349,16 +412,103 @@ class DesktopPrimaryFormTests(unittest.TestCase):
         window.token.set.assert_called_once_with("")
 
     def test_busy_state_needs_only_primary_form_fields(self):
-        window = object.__new__(D.DiscordDesktop)
-        window.token_entry = mock.Mock()
-        window.name_entry = mock.Mock()
-        window.save_button = mock.Mock()
-        window.install_button = mock.Mock()
-        window.service = mock.Mock(installer=lambda: None)
+        window = self.window()
         window._set_busy(True)
         self.assertTrue(window.busy)
-        for widget in (window.token_entry, window.name_entry, window.save_button):
+        for widget in (window.token_entry, window.name_entry, window.save_button, window.token_view_button):
             widget.state.assert_called_with(["disabled"])
+
+    def test_current_token_is_only_loaded_on_explicit_show_and_cleared_on_hide(self):
+        window = self.window()
+        window._refresh_state()
+        window.service.current_bot_token.assert_not_called()
+        window._toggle_current_token()
+        window.service.current_bot_token.assert_called_once_with()
+        self.assertTrue(window.token_visible)
+        window.current_token.set.assert_called_with(OLD_TOKEN)
+        window.current_token_entry.configure.assert_called_with(show="")
+        window.token.set.assert_not_called()
+        window._append.assert_not_called()
+        window._toggle_current_token()
+        self.assertFalse(window.token_visible)
+        window.current_token.set.assert_called_with("********")
+        window.current_token_entry.configure.assert_called_with(show="*")
+        self.assertEqual(window.service.current_bot_token.call_count, 1)
+
+    def test_missing_token_has_empty_display_and_disabled_view_button(self):
+        window = self.window()
+        window.service.inspect.return_value["bot_source"] = None
+        window._refresh_state()
+        self.assertFalse(window.has_current_token)
+        window.current_token.set.assert_called_with("")
+        window.token_view_button.state.assert_called_with(["disabled"])
+        window.service.current_bot_token.assert_not_called()
+
+    def test_failed_show_keeps_token_hidden_and_logs_only_safe_error(self):
+        window = self.window()
+        window.service.current_bot_token.side_effect = OSError(OLD_TOKEN)
+        window._toggle_current_token()
+        self.assertFalse(window.token_visible)
+        self.assertNotIn(mock.call(OLD_TOKEN), window.current_token.set.call_args_list)
+        window._append.assert_called_once()
+        self.assertNotIn(OLD_TOKEN, str(window._append.call_args))
+
+    def test_removed_token_stays_hidden_if_configuration_disappears_before_show(self):
+        window = self.window()
+        window.service.current_bot_token.return_value = None
+        window._toggle_current_token()
+        self.assertFalse(window.has_current_token)
+        self.assertFalse(window.token_visible)
+        window.current_token.set.assert_called_with("")
+        window.current_token_entry.configure.assert_called_with(show="*")
+        window.token_view_button.state.assert_called_with(["disabled"])
+        window.token.set.assert_not_called()
+
+    def test_busy_window_does_not_reveal_tokens(self):
+        window = self.window()
+        window.busy = True
+        window._toggle_current_token()
+        window.service.current_bot_token.assert_not_called()
+        window.current_token.set.assert_not_called()
+
+    def test_save_refresh_busy_and_close_clear_revealed_value(self):
+        for operation in ("save", "refresh", "busy", "close"):
+            with self.subTest(operation=operation):
+                window = self.window()
+                window._toggle_current_token()
+                window._start = mock.Mock()
+                if operation == "save":
+                    window._save()
+                elif operation == "refresh":
+                    window._refresh_state()
+                elif operation == "busy":
+                    window._set_busy(True)
+                else:
+                    window._close()
+                self.assertFalse(window.token_visible)
+                window.current_token.set.assert_called_with("********")
+                window.current_token_entry.configure.assert_called_with(show="*")
+
+    def test_saving_after_viewing_keeps_replacement_blank_and_environment_source_intact(self):
+        with tempfile.TemporaryDirectory(prefix="discord-view-save-test-") as temporary:
+            config_dir = Path(temporary)
+            bot_path = config_dir / ".env"
+            D.setup.save_bot_token(OLD_TOKEN, bot_path)
+            original = bot_path.read_bytes()
+            factory = ReaderFactory()
+            service = D.SetupService(config_dir=config_dir, reader_factory=factory,
+                                     environ={"DISCORD_BOT_TOKEN": ENV_TOKEN})
+            window = self.window()
+            window.service = service
+            window._toggle_current_token()
+            window.current_token.set.assert_called_with(ENV_TOKEN)
+            result = []
+            window._start = lambda kind, operation: result.append(operation())
+            window._save()
+            self.assertTrue(result[0]["complete"])
+            self.assertEqual(factory.tokens, [ENV_TOKEN])
+            self.assertEqual(bot_path.read_bytes(), original)
+            self.assertNotIn(ENV_TOKEN, json.dumps(result))
 
 
 if __name__ == "__main__":

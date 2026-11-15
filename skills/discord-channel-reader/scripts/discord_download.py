@@ -174,7 +174,7 @@ class AttachmentDownloader:
 
     def _download_file(self, item, destination):
         request = urllib.request.Request(item["url"], method="GET", headers={
-            "User-Agent": "PQC-Discord/0.2.0", "Accept-Encoding": "identity",
+            "User-Agent": "PQC-Discord/0.2.1", "Accept-Encoding": "identity",
         })
         temporary = None
         started = self.clock()

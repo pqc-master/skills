@@ -95,8 +95,8 @@ class SubmissionAPI:
         self.bodies.append((body, content_type))
         _, parts = unpack(body, content_type)
         return {"id": MESSAGE, "channel_id": thread_id or self.current_channel(), "webhook_id": webhook_id,
-                "attachments": [{"id": "111", "filename": "sourcecode.zip", "size": len(parts["files[0]"].get_payload(decode=True))},
-                                {"id": "112", "filename": "report.md", "size": len(parts["files[1]"].get_payload(decode=True))}]}
+                "attachments": [{"id": "111", "filename": parts["files[0]"].get_filename(), "size": len(parts["files[0]"].get_payload(decode=True))},
+                                {"id": "112", "filename": parts["files[1]"].get_filename(), "size": len(parts["files[1]"].get_payload(decode=True))}]}
 
     def current_channel(self):
         for call in reversed(self.calls):
@@ -142,7 +142,7 @@ class IsolatedSubmission(unittest.TestCase):
 
 
 class SubmissionFileTests(IsolatedSubmission):
-    def test_upload_names_are_fixed_and_original_bytes_preserved(self):
+    def test_input_file_roles_and_original_bytes_are_preserved(self):
         files = self.files()
         self.assertEqual([f["filename"] for f in files], ["sourcecode.zip", "report.md"])
         self.assertEqual(files[0]["data"], self.archive.read_bytes())
@@ -177,7 +177,7 @@ class SubmissionWorkflowTests(IsolatedSubmission):
         self.assertEqual(result["username"], "민영 · Codex")
         self.assertEqual(self.reader.calls, [])
         self.assertEqual(self.api.calls, [])
-        self.assertEqual([f["filename"] for f in result["files"]], ["sourcecode.zip", "report.md"])
+        self.assertEqual([f["filename"] for f in result["files"]], ["sourcecode_민영.zip", "report_민영.md"])
         self.assert_no_secrets(result)
         self.assertNotIn("data", result["files"][0])
 
@@ -189,11 +189,50 @@ class SubmissionWorkflowTests(IsolatedSubmission):
         self.assertEqual(payload["username"], "민영 · Codex")
         self.assertEqual(payload["allowed_mentions"], {"parse": []})
         self.assertEqual(payload["content"], "검증 결과 공유 @everyone")
-        self.assertEqual([a["filename"] for a in payload["attachments"]], ["sourcecode.zip", "report.md"])
+        self.assertEqual([a["filename"] for a in payload["attachments"]], ["sourcecode_민영.zip", "report_민영.md"])
+        self.assertEqual([parts[f"files[{index}]"].get_filename() for index in range(2)],
+                         ["sourcecode_민영.zip", "report_민영.md"])
         self.assertEqual(parts["files[0]"].get_payload(decode=True), self.archive.read_bytes())
         self.assertEqual(parts["files[1]"].get_payload(decode=True), self.report.read_bytes())
         self.assertEqual(result["message_url"], f"https://discord.com/channels/{GUILD}/{CHANNEL}/{MESSAGE}")
         self.assert_no_secrets(result)
+
+    def test_preview_and_send_use_safe_author_names_without_changing_inputs_or_profile(self):
+        for name, suffix in (("  김 민영  ", "김_민영"),
+                             ('a/b\\c:d"e<f>g|h?i*j', "a_b_c_d_e_f_g_h_i_j"),
+                             ("../\\:*?\"<>|", "user"),
+                             ("민\u2028영", "민_영")):
+            with self.subTest(name=name):
+                self.config["display_name"] = name
+                profile_before = json.dumps(self.config, sort_keys=True)
+                files = self.files()
+                files_before = [dict(item) for item in files]
+                submitter = self.submitter()
+                preview = submitter.preview(CHANNEL, files)
+                result = submitter.send(CHANNEL, files)
+                payload, parts = unpack(*self.api.bodies[0])
+                expected_names = [f"sourcecode_{suffix}.zip", f"report_{suffix}.md"]
+                self.assertEqual([item["filename"] for item in preview["files"]], expected_names)
+                self.assertEqual(result["files"], preview["files"])
+                self.assertEqual([item["filename"] for item in payload["attachments"]], expected_names)
+                self.assertEqual([parts[f"files[{index}]"].get_filename() for index in range(2)], expected_names)
+                self.assertEqual(payload["username"], name.strip() + " · Codex")
+                self.assertEqual(files, files_before)
+                self.assertEqual(json.dumps(self.config, sort_keys=True), profile_before)
+                for index, item in enumerate(files):
+                    self.assertEqual(preview["files"][index]["sha256"], item["sha256"])
+                    self.assertEqual(parts[f"files[{index}]"].get_payload(decode=True), item["data"])
+                self.assertTrue(self.archive.is_file())
+                self.assertTrue(self.report.is_file())
+
+    def test_control_characters_in_display_name_still_fail_before_network(self):
+        for name in ("민\r\n영", "민\x00영", "민\u202e영"):
+            with self.subTest(name=name):
+                self.config["display_name"] = name
+                with self.assertRaises(S.SubmissionError):
+                    self.submitter()
+                self.assertEqual(self.reader.calls, [])
+                self.assertEqual(self.api.calls, [])
 
     def test_no_existing_webhook_creates_one_on_current_problem_channel(self):
         submitter = self.submitter(api=SubmissionAPI(hooks=[]))
@@ -255,7 +294,7 @@ class SubmissionWorkflowTests(IsolatedSubmission):
         self.assertEqual(api.calls, [("list", CHANNEL), ("create", CHANNEL)])
 
     def test_unconfirmed_attachment_or_channel_result_is_not_reported_as_success(self):
-        for fault in ("missing_report", "wrong_channel"):
+        for fault in ("missing_report", "wrong_channel", "wrong_filename"):
             with self.subTest(fault=fault):
                 api = SubmissionAPI()
                 execute = api.execute_webhook
@@ -263,6 +302,8 @@ class SubmissionWorkflowTests(IsolatedSubmission):
                     response = execute(*args, **kwargs)
                     if fault == "missing_report":
                         response["attachments"].pop()
+                    elif fault == "wrong_filename":
+                        response["attachments"][0]["filename"] = "sourcecode.zip"
                     else:
                         response["channel_id"] = OTHER_CHANNEL
                     return response

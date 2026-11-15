@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Preview or submit sourcecode.zip and report.md to the chosen problem channel."""
+"""Preview or submit named source ZIP and Markdown report attachments."""
 from __future__ import annotations
 
 import argparse
@@ -68,6 +68,15 @@ def _username(config):
         raise SubmissionError("Configure a valid display name before submitting files.") from None
 
 
+def _upload_filenames(display_name):
+    # Validate by the same rules as the author header, without changing that name.
+    _username({"display_name": display_name})
+    # Avoid paths, Windows-reserved characters and multipart header quoting.
+    suffix = "".join("_" if character in '<>:"/\\|?*' or character.isspace() else character
+                     for character in display_name.strip()).strip("._") or "user"
+    return (f"sourcecode_{suffix}.zip", f"report_{suffix}.md")
+
+
 def _message(message):
     if message is None:
         return ""
@@ -128,8 +137,9 @@ def load_files(source_zip, report):
     return _files(result)
 
 
-def encode_multipart(payload, files):
+def encode_multipart(payload, files, *, display_name=None):
     files = _files(files)
+    filenames = FILENAMES if display_name is None else _upload_filenames(display_name)
     try:
         serialized = json.dumps(payload, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
     except (TypeError, ValueError, UnicodeError):
@@ -142,10 +152,10 @@ def encode_multipart(payload, files):
     parts = [b"--" + marker + b"\r\n",
              b'Content-Disposition: form-data; name="payload_json"\r\n',
              b"Content-Type: application/json\r\n\r\n", serialized, b"\r\n"]
-    for index, item in enumerate(files):
+    for index, (item, filename) in enumerate(zip(files, filenames)):
         mime = "application/zip" if index == 0 else "text/markdown; charset=utf-8"
         parts.extend([b"--" + marker + b"\r\n",
-                      f'Content-Disposition: form-data; name="files[{index}]"; filename="{item["filename"]}"\r\n'.encode("ascii"),
+                      f'Content-Disposition: form-data; name="files[{index}]"; filename="{filename}"\r\n'.encode("utf-8"),
                       f"Content-Type: {mime}\r\n\r\n".encode("ascii"), item["data"], b"\r\n"])
     parts.append(b"--" + marker + b"--\r\n")
     if sum(len(part) for part in parts) > MAX_REQUEST_BYTES:
@@ -335,6 +345,7 @@ class Submitter:
     def __init__(self, config, reader_client=None, api=None,
                  guild_id=DEFAULT_GUILD_ID, category_id=DEFAULT_CATEGORY_ID):
         self.username = _username(config)
+        self.display_name = config["display_name"].strip()
         self.reader = reader_client
         self.api = api
         self.guild_id = snowflake(guild_id)
@@ -343,15 +354,17 @@ class Submitter:
     def _prepare(self, channel_id, files, message):
         channel_id = snowflake(channel_id)
         files = _files(files)
+        filenames = _upload_filenames(self.display_name)
         content = _message(message)
         payload = {"username": self.username, "allowed_mentions": {"parse": []},
-                   "attachments": [{"id": index, "filename": item["filename"]} for index, item in enumerate(files)]}
+                   "attachments": [{"id": index, "filename": filename} for index, filename in enumerate(filenames)]}
         if content:
             payload["content"] = content
-        body, content_type = encode_multipart(payload, files)
+        body, content_type = encode_multipart(payload, files, display_name=self.display_name)
         preview = {"guild_id": self.guild_id, "category_id": self.category_id,
                    "channel_id": channel_id, "username": self.username, "content": content,
-                   "files": [{key: item[key] for key in ("filename", "size", "sha256")} for item in files],
+                   "files": [{"filename": filename, "size": item["size"], "sha256": item["sha256"]}
+                             for item, filename in zip(files, filenames)],
                    "may_create_webhook": True}
         return preview, body, content_type
 
