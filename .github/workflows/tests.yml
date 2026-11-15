@@ -30,3 +30,4 @@ jobs:
         run: |
           python skills/discord-channel-reader/scripts/discord_reader.py --help
           python skills/discord-channel-reader/scripts/discord_publish.py --help
+          python skills/discord-channel-reader/scripts/discord_setup.py --help

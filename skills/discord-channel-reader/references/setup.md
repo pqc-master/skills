@@ -1,6 +1,6 @@
-# 연결 설정과 조회 범위
+# 처음 연결하기와 조회 범위
 
-이 문서는 봇 토큰을 사용하는 조회·내보내기 설정이다. 작성자 이름을 붙여 글을 올리려면 [웹훅 게시 가이드](publishing.md)를 사용한다.
+처음 연결할 때 봇 토큰·표시 이름·웹훅 URL을 한 번에 설정한다. 봇 생성과 읽기 권한은 아래에서, 게시할 채널의 웹훅 생성은 [웹훅 게시 가이드](publishing.md)에서 확인한다.
 
 ## 기본 대상과 인증
 
@@ -10,7 +10,7 @@
 
 ## 봇 생성과 서버 초대
 
-이미 봇을 만들고 서버에 초대했다면 권한을 확인한 뒤 [토큰 저장](#토큰-저장)으로 이동한다. 이 스킬은 실행할 때 Discord HTTP API에 요청하므로 별도 봇 서버나 상시 실행 프로그램이 필요 없다. Discord에서 봇이 오프라인으로 표시되어도 조회할 수 있다.
+이미 봇을 만들고 서버에 초대했다면 권한을 확인한 뒤 [통합 설정](#통합-설정)으로 이동한다. 이 스킬은 실행할 때 Discord HTTP API에 요청하므로 별도 봇 서버나 상시 실행 프로그램이 필요 없다. Discord에서 봇이 오프라인으로 표시되어도 조회할 수 있다.
 
 1. [Discord Developer Portal](https://discord.com/developers/applications)에서 **New Application**을 누르고 봇 이름을 입력해 생성한다.
 2. 왼쪽 **Bot → Privileged Gateway Intents**에서 **Message Content Intent**를 켜고 저장한다. 메시지 본문·첨부 등을 가져오기 위한 설정이며, 앱 규모에 따라 별도 승인이 필요할 수 있다.
@@ -21,36 +21,42 @@
 
 [공식 봇 생성·설치 안내](https://docs.discord.com/developers/quick-start/getting-started)와 [Message Content Intent 설명](https://docs.discord.com/developers/events/gateway#message-content-intent)을 참고한다. 스레드는 부모 채널의 권한과 비공개 스레드의 가시성에 영향을 받는다. 음성·스테이지 채널의 텍스트 대화에는 **Connect** 권한도 필요하다. 이 스킬에 서버 관리자 권한을 일괄 부여할 필요는 없다.
 
-## 토큰 저장
+## 통합 설정
 
-저장 위치는 현재 사용자의 홈 디렉터리 아래 **`~/.config/discord-channel-reader/.env`**이다. 저장소 안의 `.env`에 넣는 방식이 아니다. 파일에는 `DISCORD_BOT_TOKEN=발급받은_토큰` 한 줄을 저장한다. 토큰 앞에 `Bot `을 붙이지 않는다.
-
-아래 코드를 **사용자 본인의 macOS·Linux 터미널**에 통째로 붙여넣어 실행한다. 입력 안내가 나오면 토큰을 붙여넣고 Enter를 누른다. 입력하는 토큰은 화면에 표시되지 않으며, 소유자만 읽고 쓸 수 있는 권한(`600`)으로 저장한다. 토큰을 채팅·명령 인자·GitHub에 붙이지 않는다. 아래 셸 구문은 Windows PowerShell용이 아니다.
+스킬 설치 후 **사용자 본인의 macOS·Linux 터미널**에서 아래 명령을 한 번 실행한다. `CODEX_HOME`을 설정한 경우 해당 설치 위치를 사용한다. 아래 셸 구문은 Windows PowerShell용이 아니다.
 
 ```sh
-python3 - <<'PYSETUP'
-import getpass, os, warnings
-from pathlib import Path
-
-path = Path.home() / '.config/discord-channel-reader/.env'
-if path.exists():
-    raise SystemExit('설정 파일이 이미 있습니다. 기존 파일을 로컬 편집기로 수정하세요.')
-path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-warnings.simplefilter('error', getpass.GetPassWarning)
-try:
-    token = getpass.getpass('봇 토큰을 붙여넣고 Enter: ').strip()
-except getpass.GetPassWarning:
-    raise SystemExit('숨김 입력이 가능한 터미널에서 직접 실행하세요.')
-if not token or any(c.isspace() for c in token):
-    raise SystemExit("토큰만 입력하세요. 'Bot ' 접두사는 제외합니다.")
-fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-with os.fdopen(fd, 'w') as f:
-    f.write('DISCORD_BOT_TOKEN=' + token + '\n')
-print('저장 완료:', path)
-PYSETUP
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py"
 ```
 
-기존 설정 파일은 덮어쓰지 않는다. 토큰을 교체하려면 로컬 편집기로 해당 파일의 `DISCORD_BOT_TOKEN` 값을 수정하고, macOS·Linux에서는 `chmod 600 ~/.config/discord-channel-reader/.env`로 파일 권한을 600으로 설정한다. 토큰은 이후 실행에서도 자동으로 읽으므로 매번 입력할 필요가 없다.
+복제한 저장소에서 직접 실행한다면 저장소 최상위 디렉터리에서 `python3 skills/discord-channel-reader/scripts/discord_setup.py`를 사용한다.
+
+설정 순서는 다음과 같다.
+
+1. **봇 토큰:** 저장된 전용 설정이 없으면 토큰을 숨김 입력한다. 토큰 앞에 `Bot `을 붙이지 않는다. 이미 설정한 토큰은 재사용하고, 환경변수나 Fiesta 설정이 발견되면 봇 이름·설정 출처를 확인한 뒤 재사용 여부를 선택한다. 새 토큰은 봇 인증이 성공한 뒤 저장한다.
+2. **게시 기능 선택:** `웹훅 게시도 설정할까요?`에 답한다. 조회만 사용할 때는 건너뛴다.
+3. **표시 이름·웹훅:** 처음 설정한다면 표시 이름을 입력하고, 이어서 웹훅 URL을 숨김 입력한다. 기존 이름·채널별 웹훅이 있으면 재사용하며, 필요한 경우 채널을 추가할 수 있다.
+
+이름을 `민영`으로 설정하면 게시할 때 `민영 · Codex`로 표시된다. 설정은 다음 위치에 소유자만 읽고 쓸 수 있는 권한(`600`)으로 저장한다. 토큰·웹훅 URL은 채팅·명령 인자·GitHub에 붙이지 않는다.
+
+| 저장 위치 | 내용 |
+| --- | --- |
+| `~/.config/discord-channel-reader/.env` | 새로 입력한 봇 토큰. 환경변수·Fiesta 설정을 재사용하면 기존 출처를 그대로 사용 |
+| `~/.config/discord-channel-reader/publisher.json` | 표시 이름과 채널별 웹훅 URL |
+
+이후 실행에서 저장한 값을 자동으로 읽으므로 매번 입력할 필요가 없다. 설정 과정은 인증·웹훅 조회만 수행하며 메시지를 보내지 않는다. 봇 토큰 저장 후 웹훅 설정에서 실패하더라도 저장한 봇 설정은 유지된다. 결과에 표시된 완료·실패 단계를 확인하고 같은 명령을 다시 실행하면 된다.
+
+필요한 부분만 설정할 때는 다음 옵션을 사용한다.
+
+| 옵션 | 동작 |
+| --- | --- |
+| `--skip-publish` | 봇 토큰만 설정 |
+| `--skip-bot` | 이름·웹훅만 설정 |
+| `--name "민영"` | 표시 이름을 미리 지정 |
+| `--guild-id SERVER_ID` | 웹훅의 대상 서버 지정 |
+| `--replace-token` | 새 봇 토큰을 입력해 전용 설정 파일의 토큰 교체 |
+
+프로세스의 `DISCORD_BOT_TOKEN`·`FIESTA_RELAY_BOT_TOKEN`은 파일보다 우선한다. 이 환경변수가 있으면 파일 토큰 교체가 바로 적용되지 않으므로 `--replace-token`은 중단하고 환경변수 정리를 안내한다. 실제 사용할 환경에서 해당 값을 정리한 뒤 다시 실행한다. 다른 프로그램의 설정을 자동 변경하지 않는다.
 
 ## 연결 확인
 

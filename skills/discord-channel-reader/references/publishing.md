@@ -14,25 +14,31 @@
 
 기본 서버는 `1563153526283051008`, 채널을 찾을 기본 카테고리는 `1570317863984701441`이다. 게시 대상은 카테고리가 아닌 **웹훅이 연결된 채널 ID**로 지정한다. 웹훅 메타데이터에는 카테고리 정보가 없어 게시 명령이 카테고리 소속까지 검사하지는 않는다.
 
-## 2. 표시 이름과 웹훅 URL 저장
+## 2. 처음 연결할 때 함께 설정
 
-스킬을 설치한 뒤 다음 명령을 **사용자 본인의 macOS·Linux 터미널**에서 실행한다. 이름을 직접 입력하고 싶으면 `--name`을 생략한다. 기존 설정이 있다면 저장된 이름을 재사용한다.
+봇 토큰·이름·웹훅을 따로 설정할 필요 없이 [통합 설정](setup.md#통합-설정)을 한 번 실행한다. 이미 토큰을 저장했다면 재사용하고 이어서 게시 설정을 진행한다. 아래 명령을 **사용자 본인의 macOS·Linux 터미널**에서 실행한다. 이름을 직접 입력하고 싶으면 `--name`을 생략한다.
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" setup --name "민영"
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py" --name "민영"
 ```
 
-웹훅 URL 입력 안내가 나오면 복사한 URL을 붙여넣고 Enter를 누른다. URL은 화면에 표시되지 않는다. 명령은 웹훅의 서버·채널을 조회한 뒤 다음 위치에 이름과 URL을 저장한다.
+게시만 사용하려면 `--skip-bot`을 추가한다. 게시 설정을 선택한 뒤 웹훅 URL 입력 안내가 나오면 복사한 URL을 붙여넣고 Enter를 누른다. URL은 화면에 표시되지 않는다. 명령은 웹훅의 서버·채널을 조회한 뒤 다음 위치에 이름과 URL을 저장한다.
 
 ```text
 ~/.config/discord-channel-reader/publisher.json
 ```
 
-파일은 소유자만 읽고 쓸 수 있도록 권한 `600`으로 저장한다. 기존 채널 설정은 보존하고, 같은 채널의 URL을 다시 등록하면 그 채널의 설정을 갱신한다. 저장 완료 출력에 표시되는 **채널 ID**를 이후 명령에 사용한다. 설정 과정에서는 메시지를 게시하지 않는다.
+파일은 소유자만 읽고 쓸 수 있도록 권한 `600`으로 저장한다. 기존 이름·채널 설정이 있으면 URL을 다시 입력하지 않고 재사용할 수 있다. 저장 완료 출력에 표시되는 **채널 ID**를 이후 명령에 사용한다. 설정 과정에서는 메시지를 게시하지 않는다.
 
-기본 서버와 다른 서버에 연결하려면 `setup --guild-id SERVER_ID`를 지정한다. `--config PATH`로 다른 설정 파일을 사용할 때는 하위 명령보다 앞에 둔다. 파일을 저장소 밖에 보관하고 Git에 올리지 않는다.
+웹훅만 추가·교체하는 기존 명령도 계속 사용할 수 있다. 기존의 다른 채널 설정을 보존하고 같은 채널의 URL을 다시 등록하면 해당 채널의 설정을 갱신한다.
 
-복제한 저장소에서 직접 실행하려면 저장소 최상위 디렉터리에서 위 명령의 스크립트 경로를 `skills/discord-channel-reader/scripts/discord_publish.py`로 바꾼다. Python 3.9 이상이며 추가 패키지는 필요 없다. 위 셸 구문은 Windows PowerShell용이 아니다.
+```sh
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" setup
+```
+
+기본 서버와 다른 서버에 연결하려면 통합 설정 또는 위 `setup` 명령에 `--guild-id SERVER_ID`를 지정한다. 게시 전용 명령의 `--config PATH`로 다른 설정 파일을 사용할 때는 하위 명령보다 앞에 둔다. 파일을 저장소 밖에 보관하고 Git에 올리지 않는다.
+
+복제한 저장소에서 직접 실행하려면 저장소 최상위 디렉터리에서 설치 경로 대신 `skills/discord-channel-reader/scripts/` 아래의 해당 스크립트를 사용한다. Python 3.9 이상이며 추가 패키지는 필요 없다. 위 셸 구문은 Windows PowerShell용이 아니다.
 
 ## 3. 이름만 변경
 

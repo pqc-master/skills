@@ -16,7 +16,9 @@ description: Discord 카테고리의 채널 이름·ID를 조회하고 접근 �
 
 ## 실행 준비
 
-조회·내보내기는 아래 봇 토큰 설정을 사용한다. 웹훅 게시와 표시 이름 설정은 [웹훅 게시 가이드](references/publishing.md)를 읽고 `scripts/discord_publish.py`를 사용한다. 게시만 할 때는 봇 토큰이 필요 없다.
+최초 연결은 [통합 설정 가이드](references/setup.md#통합-설정)의 `scripts/discord_setup.py` 한 번으로 봇 토큰·표시 이름·웹훅을 설정한다. 사용자 터미널에서 비밀 값을 숨김 입력하며 이미 저장한 값은 재사용한다. 조회만 사용하면 게시 설정을 건너뛰고, 게시만 사용하면 `--skip-bot`을 사용한다. 에이전트가 토큰·웹훅을 채팅으로 요청하지 않는다.
+
+조회·내보내기는 아래 봇 토큰 설정을 사용한다. 웹훅 게시와 표시 이름 변경은 [웹훅 게시 가이드](references/publishing.md)를 읽고 `scripts/discord_publish.py`를 사용한다. 게시만 할 때는 봇 토큰이 필요 없다.
 
 이 파일 기준 `scripts/discord_reader.py`를 Python 3.9 이상으로 실행한다. 별도 패키지는 필요 없다. 다른 작업 디렉터리에서는 스크립트의 절대 경로를 사용한다.
 
@@ -55,7 +57,7 @@ python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py export \
 
 ## 작성자 이름을 붙여 게시
 
-게시 요청이 있을 때 [웹훅 게시 가이드](references/publishing.md)를 읽는다. 최초 설정은 사용자 터미널에서 `discord_publish.py setup`을 실행해 표시 이름과 웹훅 URL을 입력한다. URL은 숨김 입력으로 저장하며 채팅·명령 인자·도구 출력에 붙이지 않는다. 이름만 바꿀 때는 `profile --name NAME`을 사용한다.
+게시 요청이 있을 때 [웹훅 게시 가이드](references/publishing.md)를 읽는다. 최초 설정에는 통합 명령 `discord_setup.py`를 안내하고, 게시만 설정할 때는 `--skip-bot`을 붙인다. 이미 통합 설정을 마쳤으면 다시 설정하게 하지 않는다. 웹훅만 추가·교체할 때는 `discord_publish.py setup`, 이름만 바꿀 때는 `discord_publish.py profile --name NAME`을 사용한다. URL은 숨김 입력으로 저장하며 채팅·명령 인자·도구 출력에 붙이지 않는다.
 
 대상 채널 ID와 게시할 내용을 사용자 요청에서 확정한다. 빠진 항목만 묻고 카테고리 전체나 임의의 채널로 보내지 않는다. 사용자가 요청한 파일·초안만 본문으로 사용하며 대화 내보내기 파일을 자동으로 게시하지 않는다. 웹훅은 채널별로 등록한다. 카테고리 기본값이 게시 위치를 자동으로 정하지 않는다.
 

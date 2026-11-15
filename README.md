@@ -47,13 +47,19 @@ PYINSTALL
 
 ## 처음 연결하기
 
-조회·내보내기를 사용하려면 설치 후 [봇 연결 가이드](skills/discord-channel-reader/references/setup.md)를 순서대로 진행합니다. 글을 올리려면 아래 [웹훅 게시 설정](#작성자-이름을-붙여-게시하기)을 진행합니다. 게시만 할 때는 봇 토큰이 필요 없습니다.
+[봇을 만들고 서버에 초대](skills/discord-channel-reader/references/setup.md#봇-생성과-서버-초대)한 뒤, 아래 명령 **한 번으로 봇 토큰·표시 이름·웹훅 URL을 설정**합니다. 게시할 때 사용할 [채널 웹훅](skills/discord-channel-reader/references/publishing.md#1-게시할-채널에-웹훅-만들기)도 미리 만들면 됩니다.
 
-1. [봇 생성과 서버 초대](skills/discord-channel-reader/references/setup.md#봇-생성과-서버-초대): Discord에서 봇을 만들고 대상 서버에 초대합니다. 메시지 본문 접근 설정과 채널 읽기 권한도 부여합니다.
-2. [토큰 저장](skills/discord-channel-reader/references/setup.md#토큰-저장): 터미널에서 안내된 코드를 실행하고 토큰을 숨김 입력합니다. `~/.config/discord-channel-reader/.env`에 저장하며, 토큰을 채팅이나 GitHub에 붙이지 않습니다.
-3. [연결 확인](skills/discord-channel-reader/references/setup.md#연결-확인): `doctor`로 봇 인증·본문 접근 설정을 확인하고, `channels`로 기본 카테고리의 채널 목록을 조회합니다.
+```sh
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py"
+```
 
-이미 봇을 만들고 서버에 초대했다면 **토큰 저장**부터 진행하면 됩니다. 이 스킬은 실행할 때 Discord API에 직접 요청하므로 **별도 봇 서버를 계속 실행할 필요가 없습니다.** 봇이 오프라인으로 표시되어도 조회할 수 있습니다.
+1. 봇 토큰을 숨김 입력합니다. 이미 저장한 토큰은 재사용합니다.
+2. 웹훅 게시 설정을 선택하고 `민영`처럼 표시할 이름을 입력합니다.
+3. 웹훅 URL을 숨김 입력합니다. 게시할 때는 `민영 · Codex`로 표시됩니다.
+
+기존 이름·웹훅이 있으면 다시 입력하지 않아도 됩니다. 조회만 사용할 때는 게시 설정을 건너뛸 수 있고, 게시만 사용할 때는 명령에 `--skip-bot`을 붙입니다. 환경변수나 기존 Fiesta 설정을 사용하는 경우에는 어떤 봇인지 확인하고 재사용 여부를 선택합니다. [통합 설정 가이드](skills/discord-channel-reader/references/setup.md#통합-설정)에 저장 위치와 변경 방법을 정리했습니다.
+
+설정 과정에서는 메시지를 보내지 않습니다. 별도 봇 서버를 계속 실행할 필요가 없으며, 봇이 오프라인으로 표시되어도 조회할 수 있습니다. 채널 접근은 [연결 확인](skills/discord-channel-reader/references/setup.md#연결-확인) 절차로 확인합니다.
 
 ## 사용 예시
 
@@ -79,13 +85,9 @@ python3 skills/discord-channel-reader/scripts/discord_reader.py export \
 
 ## 작성자 이름을 붙여 게시하기
 
-[웹훅 게시 가이드](skills/discord-channel-reader/references/publishing.md)에 웹훅 생성부터 이름 설정·미리보기·전송까지 정리했습니다. 스킬을 설치한 뒤 아래 명령을 사용자 터미널에서 실행하면 웹훅 URL을 숨김 입력으로 받습니다. `민영`은 원하는 이름으로 바꾸세요.
+[웹훅 게시 가이드](skills/discord-channel-reader/references/publishing.md)에 웹훅 생성·미리보기·전송 방법을 정리했습니다. 위 통합 설정을 마쳤다면 바로 사용할 수 있습니다.
 
-```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" setup --name "민영"
-```
-
-설정은 `~/.config/discord-channel-reader/publisher.json`에 저장됩니다. 설정 완료 시 출력된 채널 ID로 게시 대상을 지정합니다. 이름만 바꿀 때는 URL을 다시 입력할 필요 없이 다음 명령을 사용합니다.
+이름·웹훅은 `~/.config/discord-channel-reader/publisher.json`에 저장됩니다. 설정 완료 시 출력된 채널 ID로 게시 대상을 지정합니다. 이름만 바꿀 때는 URL을 다시 입력할 필요 없이 다음 명령을 사용합니다.
 
 ```sh
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_publish.py" profile --name "철수"
