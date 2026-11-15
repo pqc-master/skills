@@ -1,0 +1,62 @@
+name: Desktop builds
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'skills/discord-channel-reader/**'
+      - 'packaging/**'
+      - '.github/workflows/desktop.yml'
+      - 'LICENSE'
+
+permissions:
+  contents: read
+
+jobs:
+  desktop:
+    name: Desktop (${{ matrix.target }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: macos-arm64
+            architecture: arm64
+          - os: windows-latest
+            target: windows-x64
+            architecture: x64
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.13'
+          architecture: ${{ matrix.architecture }}
+          cache: pip
+          cache-dependency-path: packaging/requirements-build.txt
+      - name: Install pinned build dependencies
+        run: python -m pip install -r packaging/requirements-build.txt
+      - name: Run offline source tests
+        run: python -m unittest discover -s skills/discord-channel-reader/tests -v
+      - name: Check source CLI version
+        run: python skills/discord-channel-reader/scripts/discord_cli.py --version
+      - name: Check source submission entry point
+        run: python skills/discord-channel-reader/scripts/discord_cli.py submit --help
+      - name: Check isolated source CLI runtime
+        run: python skills/discord-channel-reader/scripts/discord_cli.py self-test
+      - name: Check isolated source GUI runtime
+        run: python skills/discord-channel-reader/scripts/discord_desktop.py --smoke-test
+      - name: Build and verify original and extracted bundles
+        run: python packaging/build_desktop.py --target ${{ matrix.target }}
+      - name: Upload verified ZIP and checksum
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: PQC-Discord-${{ matrix.target }}
+          path: output/desktop/${{ matrix.target }}/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 30

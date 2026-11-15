@@ -1,5 +1,7 @@
 # 작성자 이름을 붙여 Discord에 게시하기
 
+이 문서는 이전 버전의 **채널별 웹훅으로 텍스트만 게시하는 고급 기능**이다. 현재 문제에 소스코드 ZIP·Markdown 보고서를 제출하려면 [문제 결과 제출](submitting.md)을 사용한다. 그 흐름에는 수동 웹훅 등록이 필요 없다.
+
 각자의 컴퓨터에서 스킬을 실행할 때 Discord 웹훅으로 텍스트를 보낸다. 별도 봇 서버나 상시 실행 프로그램은 필요 없다. 조회·내보내기에는 봇 토큰을 사용하지만, 게시에는 채널별 웹훅 URL을 사용한다.
 
 표시 이름을 `민영`으로 설정하면 메시지 작성자 이름에 **`민영 · Codex`**가 표시된다. 다른 사람은 자신의 컴퓨터에서 다른 이름을 설정하면 된다. 접미사까지 합쳐 최대 80 UTF-16 단위를 허용한다. 이 이름은 사용자가 정한 표시이며 Discord 계정을 인증한 결과는 아니다.
@@ -19,7 +21,7 @@
 봇 토큰·이름·웹훅을 따로 설정할 필요 없이 [통합 설정](setup.md#통합-설정)을 한 번 실행한다. 이미 토큰을 저장했다면 재사용하고 이어서 게시 설정을 진행한다. 아래 명령을 **사용자 본인의 macOS·Linux 터미널**에서 실행한다. 이름을 직접 입력하고 싶으면 `--name`을 생략한다.
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py" --name "민영"
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py" --name "민영" --with-webhook
 ```
 
 게시만 사용하려면 `--skip-bot`을 추가한다. 게시 설정을 선택한 뒤 웹훅 URL 입력 안내가 나오면 복사한 URL을 붙여넣고 Enter를 누른다. URL은 화면에 표시되지 않는다. 명령은 웹훅의 서버·채널을 조회한 뒤 다음 위치에 이름과 URL을 저장한다.

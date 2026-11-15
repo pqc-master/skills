@@ -16,6 +16,8 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
+from discord_tls import https_handler
+
 API_ROOT = "https://discord.com/api/v10"
 DEFAULT_GUILD_ID = "1563153526283051008"
 DEFAULT_CATEGORY_ID = "1570317863984701441"
@@ -109,7 +111,7 @@ class DiscordAPI:
         if not token or any(c.isspace() for c in token):
             raise ReaderError("Invalid bot token format; supply the token without a 'Bot ' prefix.")
         self.token = token
-        self.opener = opener or urllib.request.build_opener(NoRedirect())
+        self.opener = opener or urllib.request.build_opener(NoRedirect(), https_handler())
         self.sleeper = sleeper
         self.pending_delay = 0.0
 

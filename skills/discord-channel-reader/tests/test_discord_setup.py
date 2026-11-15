@@ -258,11 +258,51 @@ class PublisherSetupTests(IsolatedSetup):
         self.assertTrue(all(call[0] == "GET" for call in api.calls))
 
 
+class ProfileSetupTests(IsolatedSetup):
+    def test_new_profile_asks_only_for_name_and_saves_without_webhook(self):
+        with mock.patch("builtins.input", return_value="민영") as prompt, \
+                mock.patch.object(S.getpass, "getpass", side_effect=AssertionError("No secret needed for name setup")), \
+                mock.patch.object(S.publisher, "WebhookAPI", side_effect=AssertionError("Profile setup must stay offline")):
+            result = self.capture(S.setup_profile)
+        prompt.assert_called_once()
+        self.assertEqual(result["display_name"], "민영")
+        self.assertEqual(S.publisher.load_config(self.publish_path),
+                         {"version": 1, "display_name": "민영", "webhooks": {}})
+        self.assertFalse(self.bot_path.exists())
+
+    def test_existing_profile_reuse_needs_no_prompt_or_write(self):
+        expected = self.publisher_config()
+        S.publisher.save_config(expected, self.publish_path)
+        original = self.publish_path.read_bytes()
+        with mock.patch("builtins.input", side_effect=AssertionError("Saved name must be reused")), \
+                mock.patch.object(S.publisher, "save_config", side_effect=AssertionError("No rewrite needed")):
+            result = self.capture(S.setup_profile)
+        self.assertEqual(result["status"], "reused")
+        self.assertEqual(self.publish_path.read_bytes(), original)
+
+    def test_name_change_preserves_existing_advanced_webhooks(self):
+        expected = self.publisher_config()
+        S.publisher.save_config(expected, self.publish_path)
+        with mock.patch.object(S.publisher, "WebhookAPI", side_effect=AssertionError("No API required")):
+            self.capture(S.setup_profile, name="철수")
+        actual = S.publisher.load_config(self.publish_path)
+        self.assertEqual(actual["display_name"], "철수")
+        self.assertEqual(actual["webhooks"], expected["webhooks"])
+
+    def test_invalid_name_preserves_existing_profile(self):
+        S.publisher.save_config(self.publisher_config(), self.publish_path)
+        original = self.publish_path.read_bytes()
+        with self.assertRaises(S.publisher.PublisherError):
+            S.setup_profile(name=" ")
+        self.assertEqual(self.publish_path.read_bytes(), original)
+
+
 class SetupFlowTests(IsolatedSetup):
     def test_skip_bot_never_reads_bot_credentials(self):
         with mock.patch.object(S, "setup_bot", side_effect=AssertionError("Bot stage must be skipped")), \
-                mock.patch.object(S, "setup_publisher", return_value={"status": "reused"}) as stage, \
-                mock.patch("builtins.input", return_value="y"):
+                mock.patch.object(S, "setup_profile", return_value={"status": "reused"}) as stage, \
+                mock.patch.object(S, "setup_publisher", side_effect=AssertionError("No default webhook setup")), \
+                mock.patch("builtins.input", side_effect=AssertionError("No webhook opt-in prompt")):
             result, code = self.capture(S.run_setup, skip_bot=True)
         self.assertEqual(code, 0)
         self.assertTrue(result["complete"])
@@ -270,24 +310,51 @@ class SetupFlowTests(IsolatedSetup):
 
     def test_skip_publish_never_loads_or_requests_webhook(self):
         with mock.patch.object(S, "setup_bot", return_value={"status": "reused"}) as stage, \
+                mock.patch.object(S, "setup_profile", side_effect=AssertionError("Profile stage must be skipped")), \
                 mock.patch.object(S, "setup_publisher", side_effect=AssertionError("Publisher stage must be skipped")):
             result, code = self.capture(S.run_setup, skip_publish=True)
         self.assertEqual(code, 0)
         self.assertTrue(result["complete"])
         stage.assert_called_once()
 
-    def test_publisher_failure_keeps_successful_bot_setup_and_reports_partial(self):
+    def test_profile_failure_keeps_successful_bot_setup_and_reports_partial(self):
         def configure_bot(**kwargs):
             S.save_bot_token(NEW_TOKEN, self.bot_path)
             return {"status": "configured", "credential_saved": True, **bot_status()}
         with mock.patch.object(S, "setup_bot", side_effect=configure_bot), \
-                mock.patch.object(S, "setup_publisher", side_effect=S.publisher.PublisherError("Webhook unavailable")), \
-                mock.patch("builtins.input", return_value="y"):
+                mock.patch.object(S, "setup_profile", side_effect=S.publisher.PublisherError("Invalid display name")):
             result, code = self.capture(S.run_setup)
         self.assertNotEqual(code, 0)
         self.assertFalse(result["complete"])
         self.assertEqual(S.reader.load_token(str(self.bot_path), environ={})[0], NEW_TOKEN)
         self.assertIn("configured", json.dumps(result))
+
+    def test_default_flow_collects_token_and_name_without_webhook_questions(self):
+        factory = ReaderFactory()
+        with mock.patch.object(S, "_reader_for_token", side_effect=factory), \
+                mock.patch.object(S.getpass, "getpass", return_value=NEW_TOKEN) as secret_prompt, \
+                mock.patch("builtins.input", return_value="민영") as name_prompt, \
+                mock.patch.object(S, "setup_publisher", side_effect=AssertionError("No default webhook setup")), \
+                mock.patch.object(S.publisher, "WebhookAPI", side_effect=AssertionError("No webhook API needed")):
+            result, code = self.capture(S.run_setup)
+        self.assertEqual(code, 0)
+        self.assertTrue(result["complete"])
+        self.assertFalse(result["message_sent"])
+        secret_prompt.assert_called_once()
+        name_prompt.assert_called_once()
+        self.assertEqual(S.reader.load_token(str(self.bot_path), environ={})[0], NEW_TOKEN)
+        self.assertEqual(S.publisher.load_config(self.publish_path),
+                         {"version": 1, "display_name": "민영", "webhooks": {}})
+
+    def test_explicit_advanced_flag_keeps_optional_webhook_flow(self):
+        with mock.patch.object(S, "setup_bot", side_effect=AssertionError("Bot stage must be skipped")), \
+                mock.patch.object(S, "setup_publisher", return_value={"status": "configured"}) as stage, \
+                mock.patch.object(S, "setup_profile", side_effect=AssertionError("Advanced flow owns name setup")), \
+                mock.patch("builtins.input", return_value="y") as prompt:
+            code = self.capture(S.main, ["--skip-bot", "--with-webhook", "--name", "민영"])
+        self.assertEqual(code, 0)
+        prompt.assert_called_once()
+        stage.assert_called_once_with(name="민영", guild_id=GUILD)
 
 
 if __name__ == "__main__":

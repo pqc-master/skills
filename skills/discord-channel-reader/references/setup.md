@@ -1,6 +1,8 @@
 # 처음 연결하기와 조회 범위
 
-처음 연결할 때 봇 토큰·표시 이름·웹훅 URL을 한 번에 설정한다. 봇 생성과 읽기 권한은 아래에서, 게시할 채널의 웹훅 생성은 [웹훅 게시 가이드](publishing.md)에서 확인한다.
+처음에는 **봇 토큰과 표시 이름**만 설정한다. macOS·Windows 앱에서 설정하고 스킬을 설치하면 Python을 따로 설치하지 않아도 된다. 게시할 채널이나 웹훅 URL을 미리 등록하지 않는다.
+
+문제를 푼 뒤 제출을 요청하면, 스킬은 **현재 작업 중인 문제 채널**에 `sourcecode.zip`과 `report.md`를 함께 올린다. 봇이 해당 채널의 자기 웹훅을 재사용하거나 필요한 경우 생성한다. 자세한 흐름은 [문제 풀이 결과 제출](submitting.md)을 참고한다.
 
 ## 기본 대상과 인증
 
@@ -14,60 +16,115 @@
 
 1. [Discord Developer Portal](https://discord.com/developers/applications)에서 **New Application**을 누르고 봇 이름을 입력해 생성한다.
 2. 왼쪽 **Bot → Privileged Gateway Intents**에서 **Message Content Intent**를 켜고 저장한다. 메시지 본문·첨부 등을 가져오기 위한 설정이며, 앱 규모에 따라 별도 승인이 필요할 수 있다.
-3. **Installation**에서 **Guild Install**을 활성화한다. **Install Link**는 **Discord Provided Link**로 선택하고, **Default Install Settings → Guild Install**에서 scope는 `bot`, 권한은 **View Channels**와 **Read Message History**로 설정한다.
+3. **Installation**에서 **Guild Install**을 활성화한다. **Install Link**는 **Discord Provided Link**로 선택하고, **Default Install Settings → Guild Install**에서 scope는 `bot`, 조회 권한은 **View Channels**와 **Read Message History**로 설정한다. 작성자 이름을 붙인 결과 제출까지 사용할 때는 **Manage Webhooks**도 부여한다.
 4. **Install Link**를 열어 대상 서버에 봇을 추가한다. 기본 서버 ID는 `1563153526283051008`이다. 초대하는 계정에 해당 서버의 관리 권한이 있어야 한다.
-5. 대상 카테고리 `1570317863984701441`과 조회할 채널에서 봇의 **채널 보기·메시지 기록 읽기**를 허용한다. 비공개 카테고리나 별도 권한이 설정된 채널은 초대할 때 부여한 권한만으로 접근되지 않을 수 있다.
+5. 대상 카테고리 `1570317863984701441`과 문제 채널에서 봇의 **채널 보기·메시지 기록 읽기**를 허용한다. 결과 제출에는 해당 채널의 **웹후크 관리(Manage Webhooks)** 권한도 필요하다. 비공개 카테고리나 별도 권한이 설정된 채널은 초대할 때 부여한 권한만으로 접근되지 않을 수 있다.
 6. 토큰이 없다면 Developer Portal의 **Bot → Reset Token**에서 발급받는다. 이미 발급받아 보관한 토큰이 있으면 그대로 사용한다. 재발급하면 이전 토큰은 사용할 수 없다.
 
 [공식 봇 생성·설치 안내](https://docs.discord.com/developers/quick-start/getting-started)와 [Message Content Intent 설명](https://docs.discord.com/developers/events/gateway#message-content-intent)을 참고한다. 스레드는 부모 채널의 권한과 비공개 스레드의 가시성에 영향을 받는다. 음성·스테이지 채널의 텍스트 대화에는 **Connect** 권한도 필요하다. 이 스킬에 서버 관리자 권한을 일괄 부여할 필요는 없다.
 
+## 웹후크 관리 권한 설정
+
+이미 초대한 봇은 Discord에서 권한을 변경하면 된다. **권한을 부여받을 대상은 사람의 역할이 아니라 봇에 연결된 역할**이다. 한국어 화면에서는 보통 `웹후크 관리`로 표시된다.
+
+서버 역할에서 허용하려면 다음 순서로 진행한다.
+
+1. Discord 왼쪽 위 **서버 이름 → 서버 설정 → 역할**로 이동한다.
+2. **봇에 연결된 역할 → 권한**을 연다.
+3. 권한 검색칸에 `웹후크` 또는 `webhook`을 입력한다.
+4. **웹후크 관리(Manage Webhooks)**를 켜고 **변경사항 저장**을 누른다.
+
+대상 카테고리에서 허용하거나, 서버 역할에서 허용했는데도 채널에 접근되지 않을 때는 다음을 확인한다.
+
+1. 대상 카테고리를 우클릭하고 **카테고리 편집 → 권한**을 연다.
+2. **역할/멤버**에서 봇의 역할을 선택한다. 없으면 `+`로 추가한다.
+3. **채널 보기·메시지 기록 읽기·웹후크 관리**를 초록색 체크인 **허용**으로 설정하고 저장한다.
+4. 카테고리와 **동기화된 하위 문제 채널**에는 변경이 함께 적용된다. 동기화되지 않은 채널은 **채널 편집 → 권한 → 봇 역할**에서 직접 허용한다.
+
+하위 채널의 **채널 편집 → 권한 → 지금 동기화(Sync Now)**를 선택하면 그 채널의 전체 권한이 카테고리와 같아진다. 채널별로 다른 권한을 유지해야 한다면 동기화 대신 해당 봇 역할만 수정한다. [역할·카테고리·채널 권한 공식 안내](https://support.discord.com/hc/en-us/articles/206029707-Setting-Up-Permissions-FAQ)
+
+**웹후크 관리**는 문제 채널의 웹훅을 조회·생성하는 데 사용한다. 사용자가 직접 웹훅을 만들거나 URL을 복사할 필요는 없다. [웹후크 권한 설명](https://support.discord.com/hc/ko/articles/10543994968087-%EC%B1%84%EB%84%90-%EA%B6%8C%ED%95%9C-%EC%84%A4%EC%A0%95-%EA%B8%B0%EB%B3%B8%ED%8E%B8), [Create Webhook API](https://docs.discord.com/developers/resources/webhook#create-webhook)
+
 ## 통합 설정
 
-스킬 설치 후 **사용자 본인의 macOS·Linux 터미널**에서 아래 명령을 한 번 실행한다. `CODEX_HOME`을 설정한 경우 해당 설치 위치를 사용한다. 아래 셸 구문은 Windows PowerShell용이 아니다.
+### macOS·Windows 앱
+
+1. [실행 파일 안내](desktop.md)에 따라 운영체제에 맞는 ZIP을 모두 푼다. 앱과 `pqc-discord` 폴더를 함께 보관한다.
+2. macOS는 **PQC Discord.app**, Windows는 **PQC Discord/PQC Discord.exe**를 실행한다.
+3. **봇 토큰**과 **표시 이름**을 입력하고 **저장하고 연결 확인**을 누른다. 기존 토큰이 있으면 토큰 입력란을 비워 두면 된다. 저장된 토큰 값은 화면에 다시 표시하지 않는다.
+4. **Codex에 스킬 설치**를 누르고 새 Codex 대화에서 사용한다.
+
+설정 화면에는 채널 선택이나 웹훅 URL 입력란이 없다. 표시 이름을 `민영`으로 저장하면 결과 게시 시 `민영 · Codex`로 표시된다. 이 이름은 사용자가 입력한 표시이며 Discord 사용자 계정 인증을 의미하지 않는다. 토큰 확인과 이름 저장만 수행하므로 설정 중에는 메시지·파일을 게시하지 않는다.
+
+### 터미널에서 설정
+
+실행 파일로 설치한 스킬은 아래 명령으로도 설정할 수 있다. 기본 흐름은 **봇 토큰 → 표시 이름**이며 웹훅을 묻지 않는다.
+
+macOS·Linux 셸에서 설치된 실행기를 사용한다. `CODEX_HOME`이 있으면 해당 위치를 사용한다.
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_setup.py"
+"${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/bin/pqc-discord" setup
 ```
 
-복제한 저장소에서 직접 실행한다면 저장소 최상위 디렉터리에서 `python3 skills/discord-channel-reader/scripts/discord_setup.py`를 사용한다.
+Windows PowerShell에서는 다음과 같이 실행한다.
+
+```powershell
+$skillRoot = if ($env:CODEX_HOME) { Join-Path $env:CODEX_HOME "skills\discord-channel-reader" } else { Join-Path $env:USERPROFILE ".codex\skills\discord-channel-reader" }
+& (Join-Path $skillRoot "bin\pqc-discord.exe") setup
+```
+
+개발자가 소스를 직접 실행할 때는 Python 3.9 이상으로 저장소 최상위 디렉터리에서 `python3 skills/discord-channel-reader/scripts/discord_setup.py`를 사용한다.
 
 설정 순서는 다음과 같다.
 
 1. **봇 토큰:** 저장된 전용 설정이 없으면 토큰을 숨김 입력한다. 토큰 앞에 `Bot `을 붙이지 않는다. 이미 설정한 토큰은 재사용하고, 환경변수나 Fiesta 설정이 발견되면 봇 이름·설정 출처를 확인한 뒤 재사용 여부를 선택한다. 새 토큰은 봇 인증이 성공한 뒤 저장한다.
-2. **게시 기능 선택:** `웹훅 게시도 설정할까요?`에 답한다. 조회만 사용할 때는 건너뛴다.
-3. **표시 이름·웹훅:** 처음 설정한다면 표시 이름을 입력하고, 이어서 웹훅 URL을 숨김 입력한다. 기존 이름·채널별 웹훅이 있으면 재사용하며, 필요한 경우 채널을 추가할 수 있다.
+2. **표시 이름:** 처음에는 이름만 입력하고 저장한다. 기존 이름이 있으면 재사용한다. `--name "민영"`처럼 지정하면 이름을 입력하는 단계도 생략한다.
 
-이름을 `민영`으로 설정하면 게시할 때 `민영 · Codex`로 표시된다. 설정은 다음 위치에 소유자만 읽고 쓸 수 있는 권한(`600`)으로 저장한다. 토큰·웹훅 URL은 채팅·명령 인자·GitHub에 붙이지 않는다.
+### 저장 위치와 재설정
+
+설정은 각 사용자의 홈 디렉터리 아래에 저장한다. macOS·Linux에서는 소유자 전용 권한(`600`)을 사용하고 Windows에서는 사용자 프로필 안에 저장한다. Windows의 `~`는 `%USERPROFILE%`에 해당한다. 토큰이나 설정 파일을 채팅·GitHub에 올리지 않는다.
 
 | 저장 위치 | 내용 |
 | --- | --- |
 | `~/.config/discord-channel-reader/.env` | 새로 입력한 봇 토큰. 환경변수·Fiesta 설정을 재사용하면 기존 출처를 그대로 사용 |
-| `~/.config/discord-channel-reader/publisher.json` | 표시 이름과 채널별 웹훅 URL |
+| `~/.config/discord-channel-reader/publisher.json` | 표시 이름. 이전 고급 기능의 수동 웹훅 설정이 있으면 함께 보존 |
 
-이후 실행에서 저장한 값을 자동으로 읽으므로 매번 입력할 필요가 없다. 설정 과정은 인증·웹훅 조회만 수행하며 메시지를 보내지 않는다. 봇 토큰 저장 후 웹훅 설정에서 실패하더라도 저장한 봇 설정은 유지된다. 결과에 표시된 완료·실패 단계를 확인하고 같은 명령을 다시 실행하면 된다.
+이후 실행에서 저장한 값을 자동으로 읽으므로 매번 입력할 필요가 없다. 봇 토큰을 저장한 뒤 이름 설정이 실패해도 저장한 봇 설정은 유지된다. 결과에 표시된 완료·실패 단계를 확인하고 같은 명령을 다시 실행하면 된다.
 
 필요한 부분만 설정할 때는 다음 옵션을 사용한다.
 
 | 옵션 | 동작 |
 | --- | --- |
 | `--skip-publish` | 봇 토큰만 설정 |
-| `--skip-bot` | 이름·웹훅만 설정 |
+| `--skip-bot` | 봇 토큰을 읽지 않고 표시 이름만 설정 |
 | `--name "민영"` | 표시 이름을 미리 지정 |
-| `--guild-id SERVER_ID` | 웹훅의 대상 서버 지정 |
 | `--replace-token` | 새 봇 토큰을 입력해 전용 설정 파일의 토큰 교체 |
+| `--with-webhook` | 이전 텍스트 게시 기능을 위한 수동 웹훅 설정을 별도로 선택 |
+| `--guild-id SERVER_ID` | `--with-webhook`으로 설정할 고급 웹훅의 대상 서버 지정 |
 
 프로세스의 `DISCORD_BOT_TOKEN`·`FIESTA_RELAY_BOT_TOKEN`은 파일보다 우선한다. 이 환경변수가 있으면 파일 토큰 교체가 바로 적용되지 않으므로 `--replace-token`은 중단하고 환경변수 정리를 안내한다. 실제 사용할 환경에서 해당 값을 정리한 뒤 다시 실행한다. 다른 프로그램의 설정을 자동 변경하지 않는다.
 
+문제 풀이 결과 제출에는 `--with-webhook`이 필요 없다. 이전 방식으로 특정 채널에 텍스트만 게시하려는 경우에만 이 옵션과 [고급 웹훅 게시 가이드](publishing.md)를 사용한다.
+
 ## 연결 확인
 
-위 README의 방법으로 스킬을 설치했다면 macOS·Linux 터미널에서 다음을 실행한다. `CODEX_HOME`을 설정한 경우 그 설치 위치를 사용한다.
+앱의 **저장하고 연결 확인**은 봇 인증을 확인한다. 기본 카테고리의 접근까지 확인하려면 설치된 실행기로 다음을 실행한다.
+
+macOS에서는 다음을 사용한다.
 
 ```sh
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_reader.py" doctor
-python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_reader.py" channels
+"${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/bin/pqc-discord" read doctor
+"${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/bin/pqc-discord" read channels
 ```
 
-복제한 저장소에서 직접 실행하려면 저장소 최상위 디렉터리에서 `python3 skills/discord-channel-reader/scripts/discord_reader.py doctor`와 `python3 skills/discord-channel-reader/scripts/discord_reader.py channels`를 사용한다.
+Windows PowerShell에서는 위에서 정한 `$skillRoot`로 실행한다.
+
+```powershell
+& (Join-Path $skillRoot "bin\pqc-discord.exe") read doctor
+& (Join-Path $skillRoot "bin\pqc-discord.exe") read channels
+```
+
+소스에서 실행하려면 저장소 최상위 디렉터리에서 `python3 skills/discord-channel-reader/scripts/discord_reader.py doctor`와 `python3 skills/discord-channel-reader/scripts/discord_reader.py channels`를 사용한다.
 
 `doctor` 결과에서 다음을 확인한다. 토큰 값은 출력하지 않는다.
 
@@ -85,7 +142,7 @@ python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/disco
 
 ```sh
 env -u DISCORD_BOT_TOKEN -u FIESTA_RELAY_BOT_TOKEN \
-  python3 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/scripts/discord_reader.py" \
+  "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/bin/pqc-discord" read \
   --env-file "$HOME/.config/discord-channel-reader/.env" doctor
 ```
 
@@ -98,7 +155,7 @@ python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py \
   --env-file /ABSOLUTE/PRIVATE/PATH/.env doctor
 ```
 
-`/ABSOLUTE/SKILL/PATH`와 `/ABSOLUTE/PRIVATE/PATH/.env`는 실제 경로로 바꾼다. 기존 Fiesta 설정은 읽기만 한다. Fiesta 전용 topic이나 대회 설정이 필요하지 않으며 게시·웹훅 권한도 요구하지 않는다.
+`/ABSOLUTE/SKILL/PATH`와 `/ABSOLUTE/PRIVATE/PATH/.env`는 실제 경로로 바꾼다. 기존 Fiesta 설정은 읽기만 한다. Fiesta 전용 topic이나 대회 설정은 필요하지 않다. 조회·내보내기만 실행할 때는 웹후크 관리 권한이 필요 없으며, 문제 결과를 제출할 때는 [위 권한 설정](#웹후크-관리-권한-설정)을 추가로 확인한다.
 
 ## 다른 서버·카테고리 조회
 
@@ -118,16 +175,20 @@ API가 반환할 수 있는 현재 메시지 전부를 페이지 단위로 가�
 
 - 401: 봇 토큰을 확인한다. 토큰을 로그에 출력하지 않는다.
 - 403 또는 열람 권한 부족: `doctor`에 표시된 봇이 대상 서버에 초대됐는지 먼저 확인하고, 카테고리·채널별 권한과 스레드 접근을 확인한다. 다른 봇을 초대하고 기존 봇의 토큰을 사용하는 경우도 확인한다.
+- 조회는 되지만 결과 제출이 거부됨: 문제 채널에서 봇의 **웹후크 관리** 권한과 카테고리 권한 동기화 여부를 확인한다. 웹훅 URL을 직접 등록해서 해결하는 흐름이 아니다.
 - 빈 메시지 목록: 실제 빈 채널인지 `READ_MESSAGE_HISTORY` 권한 누락인지 확인한다. 후자를 빈 채널로 보고하지 않는다.
 - 본문 정보 누락: 애플리케이션 MESSAGE CONTENT intent 상태를 확인한다. 빈 content만으로 잘못된 설정이라고 단정하지 않는다. 첨부/시스템 메시지는 정상적으로 본문이 없을 수 있다.
 - 429: 응답의 `retry_after` 또는 `Retry-After`를 따른다. 재시도 예산을 넘으면 부분 결과를 보존하고 중단한다.
-- 중단/네트워크 오류: 완료 상태를 먼저 확인한다. 기존 출력에 덧붙여 완료로 만들지 말고 새 경로로 다시 실행한다.
+- 내보내기 중단/네트워크 오류: 완료 상태를 먼저 확인한다. 기존 출력에 덧붙여 완료로 만들지 말고 새 경로로 다시 실행한다.
+- 제출 중 연결 오류: 성공 여부가 불분명하면 실제 문제 채널부터 확인한다. 같은 파일을 자동으로 다시 올리지 않는다. [제출 상태와 오류 처리](submitting.md)를 참고한다.
 
 ## 공식 API 근거
 
 확인일: 2026-11-15. Discord REST API v10. Python 표준 라이브러리만 사용한다.
 
 - [Getting started](https://docs.discord.com/developers/quick-start/getting-started): 애플리케이션 생성, 봇 토큰, 서버 설치 설정과 초대.
+- [Setting Up Permissions FAQ](https://support.discord.com/hc/en-us/articles/206029707-Setting-Up-Permissions-FAQ): 서버 역할·카테고리·채널 권한 설정과 동기화.
+- [Webhook resource](https://docs.discord.com/developers/resources/webhook#create-webhook): `MANAGE_WEBHOOKS`를 사용하는 채널별 웹훅 생성과 조회.
 - [Channel resource](https://docs.discord.com/developers/resources/channel): 채널 유형·부모 관계, 보관된 스레드 목록과 커서.
 - [Guild resource](https://docs.discord.com/developers/resources/guild): 길드 채널 목록(스레드 제외), 활성 스레드 목록, 역할·멤버 정보.
 - [Message resource](https://docs.discord.com/developers/resources/message#get-channel-messages): 요청당 최대 100개, `before` 커서, 최신 순 응답, 기록 열람 권한 누락 시 빈 목록.

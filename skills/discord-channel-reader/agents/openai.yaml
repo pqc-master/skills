@@ -1,4 +1,4 @@
 interface:
-  display_name: "Discord 대화 조회·게시"
-  short_description: "채널 목록·전체 대화를 조회하고 요청한 글을 작성자 이름으로 게시"
+  display_name: "Discord 문제 조회·결과 제출"
+  short_description: "문제 채널의 대화를 읽고 소스코드 ZIP과 보고서를 같은 채널에 제출"
   default_prompt: "$discord-channel-reader로 기본 카테고리의 채널 목록을 보여주고, 제가 선택한 채널의 전체 대화를 가져와 주세요."

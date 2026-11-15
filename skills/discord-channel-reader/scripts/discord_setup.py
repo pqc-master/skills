@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Set up Discord reading and optional named webhook publishing in one terminal flow."""
+"""Set up the bot token and author name for the current problem channel."""
 from __future__ import annotations
 
 import argparse
@@ -218,11 +218,32 @@ def setup_publisher(config_path=None, name=None, guild_id=DEFAULT_GUILD_ID, api=
     return safe
 
 
+def setup_profile(name=None, config_path=None):
+    """Save only an author name; preserve any advanced webhook settings offline."""
+    config = publisher.load_config(config_path, missing_ok=True)
+    if name is None:
+        name = config["display_name"] or input("표시 이름: ").strip()
+    publisher.display_username(name)
+    name = name.strip()
+    changed = name != config["display_name"]
+    if changed:
+        config["display_name"] = name
+        publisher.save_config(config, config_path)
+    path = Path(config_path).expanduser() if config_path is not None else publisher.default_config_path()
+    return {
+        "status": "configured" if changed else "reused",
+        "display_name": name,
+        "config_path": str(path),
+        "message_sent": False,
+    }
+
+
 def _failure_result(error):
     return {"status": "failed", "error": str(error)}
 
 
-def run_setup(skip_bot=False, skip_publish=False, name=None, guild_id=DEFAULT_GUILD_ID, replace_token=False):
+def run_setup(skip_bot=False, skip_publish=False, name=None, guild_id=DEFAULT_GUILD_ID,
+              replace_token=False, with_webhook=False):
     if skip_bot and skip_publish:
         raise SetupError("--skip-bot과 --skip-publish를 동시에 지정할 수 없습니다.")
     if skip_bot and replace_token:
@@ -240,10 +261,13 @@ def run_setup(skip_bot=False, skip_publish=False, name=None, guild_id=DEFAULT_GU
         result["publishing"] = {"status": "skipped"}
     else:
         try:
-            if _ask("웹훅 게시도 설정할까요?", True):
-                result["publishing"] = setup_publisher(name=name, guild_id=guild_id)
+            if with_webhook:
+                if _ask("웹훅 게시도 설정할까요?", True):
+                    result["publishing"] = setup_publisher(name=name, guild_id=guild_id)
+                else:
+                    result["publishing"] = {"status": "skipped"}
             else:
-                result["publishing"] = {"status": "skipped"}
+                result["publishing"] = setup_profile(name=name)
         except (SetupError, publisher.PublisherError) as error:
             result["publishing"] = _failure_result(error)
             result["complete"] = False
@@ -254,10 +278,11 @@ def run_setup(skip_bot=False, skip_publish=False, name=None, guild_id=DEFAULT_GU
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--skip-bot", action="store_true", help="Set up webhook publishing only")
-    parser.add_argument("--skip-publish", action="store_true", help="Set up bot reading only")
-    parser.add_argument("--name", help="Self-declared display name for webhook posting")
-    parser.add_argument("--guild-id", default=DEFAULT_GUILD_ID, help="Expected server ID for new webhook setup")
+    parser.add_argument("--skip-bot", action="store_true", help="Set up the author name without reading bot credentials")
+    parser.add_argument("--skip-publish", action="store_true", help="Set up the bot only; skip author-name and optional webhook settings")
+    parser.add_argument("--name", help="Self-declared author name for problem-channel submissions")
+    parser.add_argument("--guild-id", default=DEFAULT_GUILD_ID, help="Expected server ID for optional --with-webhook setup")
+    parser.add_argument("--with-webhook", action="store_true", help="Also offer the advanced text-webhook setup flow")
     parser.add_argument("--replace-token", action="store_true", help="Validate and replace the dedicated bot token; preserve other dotenv entries")
     args = parser.parse_args(argv)
     try:

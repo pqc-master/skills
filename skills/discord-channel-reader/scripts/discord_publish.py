@@ -20,6 +20,8 @@ import urllib.parse
 import urllib.request
 import warnings
 
+from discord_tls import https_handler
+
 
 API_ROOT = "https://discord.com/api/v10"
 DEFAULT_GUILD_ID = "1563153526283051008"
@@ -184,7 +186,7 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 class WebhookAPI:
     def __init__(self, opener=None, sleeper=time.sleep):
-        self.opener = opener if opener is not None else urllib.request.build_opener(NoRedirect())
+        self.opener = opener if opener is not None else urllib.request.build_opener(NoRedirect(), https_handler())
         self.sleeper = sleeper
 
     def _wait(self, seconds):

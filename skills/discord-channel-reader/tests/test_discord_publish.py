@@ -8,6 +8,7 @@ import json
 import os
 from pathlib import Path
 import stat
+import sys
 import tempfile
 import unittest
 from unittest import mock
@@ -16,6 +17,7 @@ import urllib.request
 
 
 SOURCE = Path(__file__).resolve().parents[1] / "scripts" / "discord_publish.py"
+sys.path.insert(0, str(SOURCE.parent))
 spec = importlib.util.spec_from_file_location("discord_publish", SOURCE)
 publisher_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(publisher_module)

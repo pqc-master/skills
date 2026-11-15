@@ -3,13 +3,16 @@ import contextlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import tempfile
+import sys
 import unittest
 from unittest import mock
 import urllib.error
 
 SOURCE = Path(__file__).resolve().parents[1] / "scripts" / "discord_reader.py"
+sys.path.insert(0, str(SOURCE.parent))
 spec = importlib.util.spec_from_file_location("discord_reader", SOURCE)
 reader_module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(reader_module)
@@ -331,8 +334,9 @@ class HTTPAndCredentialTests(unittest.TestCase):
             path.chmod(0o600)
             self.assertEqual(R.load_token(path, environ={})[0], "literal-$(do-not-run)")
             self.assertEqual(R.load_token(path, environ={"FIESTA_RELAY_BOT_TOKEN": "environment-token"})[0], "environment-token")
-            path.chmod(0o644)
-            with self.assertRaises(R.ReaderError): R.load_token(path, environ={})
+            if os.name == "posix":
+                path.chmod(0o644)
+                with self.assertRaises(R.ReaderError): R.load_token(path, environ={})
 
     def test_regular_user_token_not_accepted_as_bot(self):
         api = FakeAPI()
