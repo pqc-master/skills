@@ -33,3 +33,5 @@ jobs:
           python skills/discord-channel-reader/scripts/discord_setup.py --help
           python skills/discord-channel-reader/scripts/discord_cli.py --help
           python skills/discord-channel-reader/scripts/discord_submit.py --help
+          python skills/discord-channel-reader/scripts/discord_cli.py download --help
+          python skills/discord-channel-reader/scripts/discord_cli.py workspace --help

@@ -1,0 +1,6 @@
+interface:
+  display_name: "PQC 전환 대상 식별"
+  short_description: "프로젝트의 암호 역할과 키 흐름을 분석해 PQC 전환 대상을 선정합니다"
+  default_prompt: "$pqc-identify를 사용해 지정한 프로젝트의 암호 사용처와 키 흐름을 분석하고 전환·유지·추가 조사 대상을 근거와 함께 정리해줘."
+policy:
+  allow_implicit_invocation: true

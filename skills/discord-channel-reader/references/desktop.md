@@ -4,7 +4,7 @@ macOS·Windows 배포본에는 Python 실행 환경과 설정 화면이 포함�
 
 ## 다운로드와 실행
 
-[다운로드 페이지](https://github.com/pqc-master/skills/releases/tag/desktop-v0.1.0)에서 다음 파일 중 하나를 받는다.
+[다운로드 페이지](https://github.com/pqc-master/skills/releases/tag/desktop-v0.2.0)에서 다음 파일 중 하나를 받는다.
 
 - **macOS · Apple Silicon:** `PQC-Discord-macos-arm64.zip`을 모두 풀고 `PQC Discord.app`을 연다.
 - **Windows · x64:** `PQC-Discord-windows-x64.zip`을 모두 풀고 `PQC Discord/PQC Discord.exe`를 연다.
@@ -16,8 +16,8 @@ ZIP 안의 `pqc-discord` 폴더에는 스킬 실행기가 들어 있다. 앱과 
 1. Discord에서 봇을 만들고 대상 서버에 초대한다. [봇 설정 안내](setup.md#봇-생성과-서버-초대)를 참고한다.
 2. 설정 화면에 **봇 토큰**과 **표시 이름**을 입력한다. 토큰은 가려서 표시한다.
 3. **저장하고 연결 확인**을 누른다. 토큰 인증이 성공하면 저장하고, 표시 이름도 로컬에 저장한다.
-4. **Codex에 스킬 설치**를 누른다. 스킬과 실행 환경을 개인 스킬 폴더에 복사한다.
-5. 새 Codex 대화에서 `$discord-channel-reader`를 사용한다.
+4. **Codex에 스킬 설치**를 누른다. 총괄·Discord·PQC 분석·전환·보고서 스킬 5개와 실행 환경을 개인 스킬 폴더에 복사한다.
+5. 새 Codex 대화에서 `$pqc-discord-workflow`로 전체 작업을 요청한다. 단순 조회에는 `$discord-channel-reader`를 사용할 수 있다.
 
 이미 저장된 토큰은 입력란에 다시 표시하지 않는다. 빈칸으로 두면 기존 값을 유지한다. 표시 이름은 웹훅을 미리 만들지 않아도 저장할 수 있다. 설정 과정에서는 메시지나 파일을 게시하지 않는다.
 
@@ -45,4 +45,4 @@ Codex는 설치된 실행기를 우선 사용한다. 아래 `<SKILL>`은 실제 
 
 ## 검증 범위
 
-빌드는 macOS arm64·Windows x64에서 수행하고 압축 해제한 GUI 시작과 CLI 실행을 확인한다. CLI 자체 검사에는 실제 토큰이나 네트워크를 사용하지 않는다. GUI의 `--demo`는 가상 설정만 사용하며 실제 계정에 연결하지 않는다. 실제 Discord 제출은 **NOT TESTED**다. 실행 환경·소스 커밋·서명 상태는 배포 파일의 `build-info.json`을 확인한다.
+빌드는 macOS arm64·Windows x64에서 수행하고 압축 해제한 GUI 시작과 CLI 실행을 확인한다. CLI 자체 검사와 임시 경로의 스킬 5개 설치 검사에는 실제 토큰이나 네트워크를 사용하지 않는다. GUI의 `--demo`는 가상 설정만 사용하며 실제 계정에 연결하지 않는다. 실제 Discord 제출은 **NOT TESTED**다. 실행 환경·소스 커밋·서명 상태는 배포 파일의 `build-info.json`을 확인한다.

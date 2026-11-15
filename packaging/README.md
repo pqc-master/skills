@@ -1,6 +1,6 @@
 # Standalone desktop build
 
-PQC Discord의 설정 GUI와 명령줄 프로그램을 Python 런타임과 함께 묶는다. 사용자는 Python을 별도로 설치하지 않는다. 이 문서는 빌드 담당자용이며, 사용 방법은 저장소 README를 따른다.
+PQC Discord의 설정 GUI와 명령줄 프로그램을 Python 런타임과 함께 묶는다. 0.2.0부터 Discord 스킬, PQC 총괄 스킬, 기존 PQC 스킬 3개를 함께 설치한다. 사용자는 스킬 실행기를 위해 Python을 별도로 설치하지 않는다. 분석 대상 프로젝트의 컴파일러·의존성은 별도로 필요할 수 있다. 이 문서는 빌드 담당자용이며, 사용 방법은 저장소 README를 따른다.
 
 ## 지원하는 빌드 대상
 
@@ -25,23 +25,27 @@ python packaging/build_desktop.py
 
 대상은 현재 Python의 OS·아키텍처로 선택한다. 필요하면 `--target macos-arm64` 또는 `--target windows-x64`를 지정한다. 다른 아키텍처의 Python으로 빌드하려 하면 중단한다. `--output-dir PATH`로 결과 저장 경로를 바꿀 수 있다.
 
-빌드는 GUI와 CLI를 각각 `onedir` 형식으로 만든다. 스킬의 `SKILL.md`, `agents`, `assets`, `references`, `scripts`, `tests`를 `sys._MEIPASS/skills/discord-channel-reader`에 함께 넣는다. 설치된 `bin` 디렉터리, 캐시, `.env` 파일, `publisher.json`, 대화 내보내기는 포함하지 않는다. [번들 리소스 경로](https://pyinstaller.org/en/v6.22.3/runtime-information.html)
+빌드는 GUI와 CLI를 각각 `onedir` 형식으로 만든다. 다음 다섯 폴더의 `SKILL.md`, `agents`, `assets`, `references`, `scripts`, `tests`를 `sys._MEIPASS/skills/` 아래에 넣는다: `discord-channel-reader`, `pqc-discord-workflow`, `pqc-identify`, `pqc-migrate`, `pqc-report`. 설치된 `bin` 디렉터리, 캐시, `.env` 파일, `publisher.json`, 대화 내보내기는 포함하지 않는다. [번들 리소스 경로](https://pyinstaller.org/en/v6.22.3/runtime-information.html)
 
-CLI에는 `submit` 명령도 포함한다. 작업할 때 지정한 채널에 `sourcecode.zip`과 `report.md`를 함께 올리고, 봇이 관리하는 해당 채널의 웹훅으로 `이름 · Codex`를 작성자 헤더에 표시한다. `submit preview`는 파일과 이름만 로컬에서 확인한다. 실제 `submit send`는 봇 인증 후 채널·카테고리·권한을 확인하며, 필요하면 웹훅을 생성한다. 빌드·설치 과정에서는 웹훅을 만들거나 파일을 게시하지 않는다.
+앱의 설치 버튼과 CLI `install`은 다섯 스킬을 같은 `skills` 디렉터리에 설치한다. 실행 환경은 `discord-channel-reader/bin`에만 복사한다. 모든 대상의 충돌을 먼저 검사하고, 전체 사본을 준비한 뒤 교체한다. 중간 교체에 실패하면 이미 바꾼 스킬도 이전 상태로 복원한다. 직접 수정한 관리 파일은 덮어쓰지 않고, 사용자가 추가한 파일은 보존한다. 별도 `~/.config/discord-channel-reader`에 있는 봇·표시 이름 설정은 설치 과정에서 읽거나 옮기지 않는다.
+
+Python으로 소스 스킬을 설치하려면 저장소에서 `python3 skills/discord-channel-reader/scripts/desktop_runtime.py --source`를 실행한다. `--target-skills-dir PATH`로 설치 위치를 지정할 수 있다. 이 방법은 실행 환경을 포함하지 않으므로 Python 3.9 이상이 필요하다. 기존 실행 파일 설치에 새 지침만 섞지 않도록, 실행 파일로 설치된 위치의 소스 갱신은 거부한다. 그런 설치는 새 앱으로 갱신한다.
+
+CLI에는 첨부를 받는 `download`, 프로젝트 압축을 다루는 `workspace`, 결과를 올리는 `submit` 명령을 포함한다. 작업할 때 지정한 채널에 `sourcecode.zip`과 `report.md`를 함께 올리고, 봇이 관리하는 해당 채널의 웹훅으로 `이름 · Codex`를 작성자 헤더에 표시한다. `submit preview`는 파일과 이름만 로컬에서 확인한다. 실제 `submit send`는 봇 인증 후 채널·카테고리·권한을 확인하며, 필요하면 웹훅을 생성한다. 빌드·설치 과정에서는 웹훅을 만들거나 파일을 게시하지 않는다.
 
 ## 검증과 결과물
 
-빌드 스크립트가 실제 번들의 CLI `--version`, 각 명령의 도움말(`submit --help` 포함), `self-test`와 GUI `--smoke-test`를 실행한다. ZIP으로 묶고 다시 푼 뒤 같은 검사를 반복한다. macOS에서는 `ditto`로 앱 내부 심볼릭 링크와 실행 권한을 보존한다. 검사가 실패하면 새 결과 ZIP을 게시하지 않는다.
+빌드 스크립트가 실제 번들의 CLI `--version`, 각 명령의 도움말, `self-test`, `install-smoke`와 GUI `--smoke-test`를 실행한다. `install-smoke`는 임시 경로에 다섯 스킬을 실제로 설치하고, 복사된 실행기의 `self-test`까지 확인한 뒤 임시 결과를 정리한다. 사용자의 홈 설정이나 `CODEX_HOME`을 바꾸지 않는다. ZIP으로 묶고 다시 푼 뒤 같은 검사를 반복한다. macOS에서는 `ditto`로 앱 내부 심볼릭 링크와 실행 권한을 보존한다. 검사가 실패하면 새 결과 ZIP을 게시하지 않는다.
 
 성공한 결과는 `output/desktop/<target>/`에 저장한다.
 
 - `PQC-Discord-<target>.zip`: GUI, CLI, 스킬 데이터, 라이선스와 빌드 정보
 - `SHA256SUMS`: ZIP의 SHA-256
-- `build-info.json`: 실제 Python·OS·의존성 버전, 소스 커밋과 작업 트리 변경 여부
+- `build-info.json`: 앱 버전·다섯 스킬 목록, 실제 Python·OS·의존성 버전, 소스 커밋과 작업 트리 변경 여부
 
 빌드·자동 검증은 실제 Discord 토큰이나 웹훅을 사용하지 않는다. 이 검증은 실서버 인증·권한·게시 성공을 증명하지 않는다. 실제 Discord 테스트 상태는 빌드 정보에서 `NOT TESTED`로 기록한다. GUI smoke test는 초기화·종료 확인이며 사용자의 모든 화면 조작을 대체하지 않는다.
 
-2026-11-15 최초 로컬 검증: macOS 26.5.2 arm64·Python 3.13.16·Tcl/Tk 9.0 환경에서 GUI·CLI 빌드와 압축 해제 후 smoke test를 통과했다. 이 최초 검증은 `submit` 추가 전 결과이며, 최신 제출 기능을 포함한 배포판은 이후 빌드 결과로 확인한다. Windows 결과는 해당 플랫폼의 CI 실행 결과로 따로 확인한다. macOS GUI 검증은 그래픽 로그인 세션 접근이 필요하므로 이를 차단하는 샌드박스에서는 앱 초기화가 실패할 수 있다.
+릴리스별로 실제 소스 커밋과 운영체제의 CI 결과를 확인한다. 한 OS의 성공을 다른 OS나 아직 실행하지 않은 버전의 성공으로 간주하지 않는다. macOS GUI 검증은 그래픽 로그인 세션 접근이 필요하므로 이를 차단하는 샌드박스에서는 앱 초기화가 실패할 수 있다.
 
 `.github/workflows/desktop.yml`은 수동 실행과 관련 파일의 `main` 푸시에 반응한다. macOS arm64·Windows x64에서 소스 테스트, 패키징, 압축 해제 후 검증을 통과해야 ZIP·체크섬을 Actions artifact로 올린다. GitHub Release 공개는 이 워크플로가 자동 수행하지 않는다.
 

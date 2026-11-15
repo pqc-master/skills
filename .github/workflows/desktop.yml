@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'skills/discord-channel-reader/**'
+      - 'skills/**'
       - 'packaging/**'
       - '.github/workflows/desktop.yml'
       - 'LICENSE'

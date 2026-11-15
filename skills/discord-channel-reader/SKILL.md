@@ -1,6 +1,6 @@
 ---
 name: discord-channel-reader
-description: Discord 카테고리의 채널 이름·ID와 전체 대화를 조회하고, 현재 문제 채널에 풀이 소스코드 ZIP과 Markdown 보고서를 작성자 이름으로 함께 제출한다. 대화 읽기·내보내기, 봇·표시 이름 설정, 문제 풀이 결과 파일 제출에 사용한다.
+description: Discord 카테고리의 채널 이름·ID와 전체 대화를 조회하고 첨부 파일을 내려받으며, 현재 문제 채널에 소스코드 ZIP과 Markdown 보고서를 작성자 이름으로 함께 제출한다. Discord 조회·다운로드·봇 설정·결과 파일 제출에 사용한다.
 ---
 
 # Discord 문제 채널 조회와 풀이 결과 제출
@@ -14,11 +14,15 @@ description: Discord 카테고리의 채널 이름·ID와 전체 대화를 조�
 | 기능 | 실행 파일 | 소스 설치의 대체 명령 |
 | --- | --- | --- |
 | 조회·내보내기 | `<SKILL>/bin/pqc-discord read ...` | `python3 <SKILL>/scripts/discord_reader.py ...` |
+| 첨부 다운로드 | `<SKILL>/bin/pqc-discord download ...` | `python3 <SKILL>/scripts/discord_download.py ...` |
+| ZIP 해제·패키징 | `<SKILL>/bin/pqc-discord workspace ...` | `python3 <SKILL>/scripts/pqc_workspace.py ...` |
 | 결과 제출 | `<SKILL>/bin/pqc-discord submit ...` | `python3 <SKILL>/scripts/discord_submit.py ...` |
 | 초기 설정 | 설정 앱 또는 `<SKILL>/bin/pqc-discord setup` | `python3 <SKILL>/scripts/discord_setup.py` |
 | 이름 변경 | `<SKILL>/bin/pqc-discord publish profile --name NAME` | `python3 <SKILL>/scripts/discord_publish.py profile --name NAME` |
 
 처음 연결은 [실행 파일 가이드](references/desktop.md)의 설정 앱에서 봇 토큰과 표시 이름만 저장하고 **Codex에 스킬 설치**를 누른다. 소스 설치만 Python 3.9 이상이 필요하다. 비밀 값을 채팅으로 요청하지 않는다. 토큰·웹훅 URL을 명령 인자나 도구 출력에 넣지 않는다. [봇 설정](references/setup.md)은 연결·권한 오류가 있을 때 읽는다.
+
+PQC 문제의 분석·전환·검증·벤치마크·전체 프로젝트 제출을 요청받으면 함께 설치된 [pqc-discord-workflow](../pqc-discord-workflow/SKILL.md)로 전체 절차를 진행하고 이 스킬은 Discord 입출력을 담당한다. 단순 조회·파일 제출 요청을 임의로 PQC 전환 작업으로 확대하지 않는다.
 
 ## 기본 범위와 작업 채널
 
@@ -46,6 +50,16 @@ description: Discord 카테고리의 채널 이름·ID와 전체 대화를 조�
 - `messages.jsonl`은 원본 기록, `transcript.md`는 시간순 읽기용이다. 첨부는 이름·크기·URL만 저장하고 파일 본문은 내려받지 않는다.
 - 삭제 기록·편집 이전 내용·보이지 않는 비공개 스레드는 복원하지 않는다. 수집 중 편집·삭제까지 동일 시점으로 고정하지 않는다.
 - 인증·접근 오류는 반복 호출하지 않는다. 부분 수집을 전체 성공으로 표시하지 않으며 결과 파일·수집 건수·누락 범위를 간결하게 전달한다.
+
+## 첨부 파일 확보
+
+[다운로드 가이드](references/downloading.md)를 읽고 조회한 메시지·첨부 ID로 새 폴더에 받는다. 내보낸 기록의 오래된 signed URL을 재사용하거나 URL을 명령 인자로 넘기지 않는다.
+
+```sh
+<SKILL>/bin/pqc-discord download --channel-id CHANNEL_ID --message-id MESSAGE_ID --output /ABSOLUTE/NEW/DOWNLOADS
+```
+
+필요한 파일만 고르려면 `--attachment-id ID`를 반복한다. 결과 manifest의 `complete`, 파일 크기·SHA-256과 원래/저장 파일명을 확인한다. 다운로드 자체는 파일을 실행하거나 ZIP을 풀지 않는다. [ZIP 도구](references/workspace.md)로 안전하게 압축을 풀고 기존 출력은 덮어쓰지 않는다.
 
 ## 현재 문제의 결과 제출
 

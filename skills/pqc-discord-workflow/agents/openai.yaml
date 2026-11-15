@@ -1,0 +1,6 @@
+interface:
+  display_name: "Discord PQC 전환·검증·제출"
+  short_description: "문제 채널의 PQC 전환부터 검증·벤치마크와 전체 프로젝트 제출까지 연결합니다"
+  default_prompt: "$pqc-discord-workflow로 지정한 문제 채널의 요구사항과 소스를 읽고 PQC 전환·검증·벤치마크를 수행한 뒤 전체 프로젝트 ZIP과 Markdown 보고서를 같은 채널에 제출해줘."
+policy:
+  allow_implicit_invocation: true

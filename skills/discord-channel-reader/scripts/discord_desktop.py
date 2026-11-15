@@ -365,8 +365,10 @@ class DiscordDesktop:
                     self._refresh_state()
                 else:
                     self.activity.set("Codex 스킬 설치 완료")
-                    self._append("Codex 스킬을 설치했습니다. 새 Codex 대화에서 사용하세요.")
+                    self._append("Codex 스킬을 설치했습니다. 새 대화에서 $pqc-discord-workflow를 사용하세요.")
                     if isinstance(result, dict):
+                        if result.get("skills"):
+                            self._append("설치한 스킬: " + ", ".join(result["skills"]))
                         for key in ("path", "skill_path", "runtime", "runtime_path", "count"):
                             if key in result:
                                 self._append(f"{key}: {result[key]}")

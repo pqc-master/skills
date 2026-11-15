@@ -15,6 +15,7 @@ def self_test():
     import discord_reader as reader
     import discord_setup as setup
     import discord_submit as submit
+    import pqc_workspace as workspace
     import zipfile
     from discord_tls import https_handler
 
@@ -45,6 +46,13 @@ def self_test():
         submission = submit.Submitter(config).preview("234567890123456789", submit.load_files(source, report))
         if submission["username"] != "테스트 · Codex" or len(submission["files"]) != 2:
             raise RuntimeError("Submission preview failed")
+        project = Path(scratch) / "project"
+        project.mkdir()
+        (project / "README.md").write_text("Offline source snapshot\n", encoding="utf-8")
+        packaged = workspace.pack_project(project, Path(scratch) / "project.zip")
+        extracted = workspace.extract_archive(packaged["archive_path"], Path(scratch) / "rebuilt")
+        if extracted["file_count"] != 1 or packaged["archive_sha256"] != extracted["archive_sha256"]:
+            raise RuntimeError("Project archive round trip failed")
     return {"ok": True, "version": VERSION, "frozen": bool(getattr(sys, "frozen", False)), "network_used": False,
             "category_id": reader.DEFAULT_CATEGORY_ID, "ca_count": len(context.get_ca_certs())}
 
@@ -52,7 +60,7 @@ def self_test():
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if not argv or argv[0] in ("-h", "--help"):
-        print("PQC Discord " + VERSION + "\nCommands: read, submit, publish, setup, install, self-test, --version\n"
+        print("PQC Discord " + VERSION + "\nCommands: read, download, workspace, submit, publish, setup, install, self-test, install-smoke, --version\n"
               "Example: pqc-discord read channels\nExample: pqc-discord submit preview --channel-id ID --source-zip solution.zip --report report.md")
         return 0
     command, rest = argv[0], argv[1:]
@@ -60,13 +68,17 @@ def main(argv=None):
         if command == "--version":
             print(VERSION)
             return 0
-        if command in ("read", "submit", "publish", "setup"):
+        if command in ("read", "download", "workspace", "submit", "publish", "setup"):
             if command == "read":
                 import discord_reader as module
             elif command == "publish":
                 import discord_publish as module
             elif command == "submit":
                 import discord_submit as module
+            elif command == "download":
+                import discord_download as module
+            elif command == "workspace":
+                import pqc_workspace as module
             else:
                 import discord_setup as module
             return module.main(rest)
@@ -76,6 +88,9 @@ def main(argv=None):
             result = install_skill()
         elif command == "self-test":
             result = self_test()
+        elif command == "install-smoke":
+            from desktop_runtime import install_smoke_test
+            result = install_smoke_test()
         else:
             raise InstallError("지원하지 않는 명령입니다. --help를 확인하세요.")
         print(json.dumps(result, ensure_ascii=False, indent=2))

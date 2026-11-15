@@ -1,0 +1,6 @@
+interface:
+  display_name: "PQC 전환"
+  short_description: "공식 근거로 대상 암호 코드를 전환하고 별도 에이전트의 검증 결과를 통합합니다"
+  default_prompt: "$pqc-migrate를 사용해 식별한 대상 기능을 공식 자료에 근거해 PQC로 전환하고 별도 에이전트로 검증해줘."
+policy:
+  allow_implicit_invocation: true
