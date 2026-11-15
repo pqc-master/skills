@@ -43,6 +43,16 @@ PYINSTALL
 
 기존 설치를 갱신하려면 로컬 변경을 보관한 뒤 해당 폴더를 교체합니다. 스킬이 선택 목록에 나타나지 않으면 새 Codex 대화를 엽니다.
 
+## 처음 연결하기
+
+설치 후 [봇 연결 가이드](skills/discord-channel-reader/references/setup.md)를 순서대로 진행합니다.
+
+1. [봇 생성과 서버 초대](skills/discord-channel-reader/references/setup.md#봇-생성과-서버-초대): Discord에서 봇을 만들고 대상 서버에 초대합니다. 메시지 본문 접근 설정과 채널 읽기 권한도 부여합니다.
+2. [토큰 저장](skills/discord-channel-reader/references/setup.md#토큰-저장): 터미널에서 안내된 코드를 실행하고 토큰을 숨김 입력합니다. `~/.config/discord-channel-reader/.env`에 저장하며, 토큰을 채팅이나 GitHub에 붙이지 않습니다.
+3. [연결 확인](skills/discord-channel-reader/references/setup.md#연결-확인): `doctor`로 봇 인증·본문 접근 설정을 확인하고, `channels`로 기본 카테고리의 채널 목록을 조회합니다.
+
+이미 봇을 만들고 서버에 초대했다면 **토큰 저장**부터 진행하면 됩니다. 이 스킬은 실행할 때 Discord API에 직접 요청하므로 **별도 봇 서버를 계속 실행할 필요가 없습니다.** 봇이 오프라인으로 표시되어도 조회할 수 있습니다.
+
 ## 사용 예시
 
 ```text
@@ -53,7 +63,7 @@ $discord-channel-reader 채널 ID 234567890123456789의 전체 대화를 스레�
 
 채널 목록은 기본 카테고리에서 조회합니다. 대화를 가져올 때는 목록에서 채널을 선택합니다. 위 채널 ID는 사용법 설명용 값이므로 실제 채널 ID로 바꿉니다.
 
-에이전트 없이 CLI로도 실행할 수 있습니다.
+에이전트 없이 CLI로도 실행할 수 있습니다. 아래 명령은 복제한 저장소의 최상위 디렉터리에서 실행합니다.
 
 ```sh
 python3 skills/discord-channel-reader/scripts/discord_reader.py doctor
