@@ -60,7 +60,7 @@
 
 실행 파일로 설치한 스킬은 아래 명령으로도 설정할 수 있다. 기본 흐름은 **봇 토큰 → 표시 이름**이며 웹훅을 묻지 않는다.
 
-macOS·Linux 셸에서 설치된 실행기를 사용한다. `CODEX_HOME`이 있으면 해당 위치를 사용한다.
+macOS 터미널에서 설치된 실행기를 사용한다. `CODEX_HOME`이 있으면 해당 위치를 사용한다.
 
 ```sh
 "${CODEX_HOME:-$HOME/.codex}/skills/discord-channel-reader/bin/pqc-discord" setup
