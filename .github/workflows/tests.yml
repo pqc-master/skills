@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        # Ubuntu 26.04 does not provide setup-python builds for Python 3.9.
+        os: [ubuntu-24.04, macos-latest]
         python: ['3.9', '3.13']
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

@@ -71,7 +71,7 @@ python3 skills/discord-channel-reader/scripts/discord_reader.py export \
 python3 -m unittest discover -s skills/discord-channel-reader/tests -v
 ```
 
-Python 3.9/macOS에서 24개 테스트가 통과했습니다. GitHub Actions는 Ubuntu·macOS의 Python 3.9·3.13에서 같은 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows와 실제 대상 채널의 전체 내보내기는 별도 검증이 필요합니다.
+Python 3.9/macOS에서 24개 테스트가 통과했습니다. GitHub Actions는 Ubuntu 24.04·macOS의 Python 3.9·3.13에서 같은 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows와 실제 대상 채널의 전체 내보내기는 별도 검증이 필요합니다.
 
 ## 기여 및 라이선스
 
