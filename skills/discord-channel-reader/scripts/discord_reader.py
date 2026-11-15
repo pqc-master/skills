@@ -17,6 +17,8 @@ import urllib.parse
 import urllib.request
 
 API_ROOT = "https://discord.com/api/v10"
+DEFAULT_GUILD_ID = "1563153526283051008"
+DEFAULT_CATEGORY_ID = "1563154015389224960"
 DISCORD_EPOCH = 1420070400000
 VIEW_CHANNEL = 1 << 10
 READ_HISTORY = 1 << 16
@@ -528,9 +530,11 @@ def main(argv=None):
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("doctor", help="Check bot authentication and Message Content intent")
     categories = subparsers.add_parser("categories", help="List categories in a server")
-    categories.add_argument("--guild-id", required=True)
+    categories.add_argument("--guild-id", default=DEFAULT_GUILD_ID,
+                            help=f"Server ID (default: {DEFAULT_GUILD_ID})")
     channels = subparsers.add_parser("channels", help="List direct channels in a category")
-    channels.add_argument("--category-id", required=True)
+    channels.add_argument("--category-id", default=DEFAULT_CATEGORY_ID,
+                          help=f"Category ID (default: {DEFAULT_CATEGORY_ID})")
     export = subparsers.add_parser("export", help="Export all available messages, without a message-count limit")
     export.add_argument("--channel-id", required=True)
     export.add_argument("--output", required=True, help="New directory; existing paths are never overwritten")

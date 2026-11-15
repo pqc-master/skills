@@ -6,7 +6,7 @@ Codex에서 사용할 수 있는 재사용 스킬 모음입니다. 각 스킬은
 
 [`discord-channel-reader`](skills/discord-channel-reader/SKILL.md)는 카테고리의 채널 목록을 조회하고 채널 ID로 접근 가능한 전체 대화를 내보냅니다.
 
-- 카테고리 ID만으로 채널 이름·ID·유형 조회
+- 기본 카테고리의 채널 이름·ID·유형 조회, 다른 카테고리 ID도 지정 가능
 - 메시지 100개 단위로 빈 페이지까지 전체 기록 조회
 - 활성·보관된 접근 가능한 스레드 포함
 - 원본 `messages.jsonl`, 시간순 `transcript.md`, 완료 상태 `metadata.json` 저장
@@ -14,6 +14,13 @@ Codex에서 사용할 수 있는 재사용 스킬 모음입니다. 각 스킬은
 - Discord API는 GET만 사용하며 게시·수정·삭제하지 않음
 
 Python 3.9 이상이면 별도 Python 패키지 설치 없이 실행할 수 있습니다. 각 사용자는 자신의 Discord 봇 토큰을 설정해야 합니다. 저장소는 토큰이나 서버의 실제 채팅 기록을 제공하지 않습니다.
+
+## 기본 조회 대상
+
+- 서버 ID: `1563153526283051008`
+- 카테고리 ID: `1563154015389224960`
+
+ID를 생략하면 위 대상을 사용합니다. 다른 서버·카테고리는 `--guild-id`·`--category-id`로 지정할 수 있습니다. 기본 ID는 조회 대상만 정하며 접근 권한을 부여하지 않습니다. 사용하는 봇에 해당 서버와 채널의 열람 권한이 있어야 합니다.
 
 ## Codex 설치
 
@@ -39,18 +46,19 @@ PYINSTALL
 ## 사용 예시
 
 ```text
-$discord-channel-reader 카테고리 ID 123456789012345678의 채널 목록을 보여줘.
+$discord-channel-reader 채널 목록을 보여줘.
 
 $discord-channel-reader 채널 ID 234567890123456789의 전체 대화를 스레드까지 가져와줘.
 ```
 
-위 ID는 사용법 설명용 값입니다. 실제 Discord 카테고리·채널 ID로 바꿉니다.
+채널 목록은 기본 카테고리에서 조회합니다. 대화를 가져올 때는 목록에서 채널을 선택합니다. 위 채널 ID는 사용법 설명용 값이므로 실제 채널 ID로 바꿉니다.
 
 에이전트 없이 CLI로도 실행할 수 있습니다.
 
 ```sh
 python3 skills/discord-channel-reader/scripts/discord_reader.py doctor
-python3 skills/discord-channel-reader/scripts/discord_reader.py channels --category-id CATEGORY_ID
+python3 skills/discord-channel-reader/scripts/discord_reader.py categories
+python3 skills/discord-channel-reader/scripts/discord_reader.py channels
 python3 skills/discord-channel-reader/scripts/discord_reader.py export \
   --channel-id CHANNEL_ID --include-threads --output /path/to/new-export
 ```
@@ -71,7 +79,7 @@ python3 skills/discord-channel-reader/scripts/discord_reader.py export \
 python3 -m unittest discover -s skills/discord-channel-reader/tests -v
 ```
 
-Python 3.9/macOS에서 24개 테스트가 통과했습니다. GitHub Actions는 Ubuntu 24.04·macOS의 Python 3.9·3.13에서 같은 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows와 실제 대상 채널의 전체 내보내기는 별도 검증이 필요합니다.
+Python 3.9/macOS에서 26개 테스트가 통과했습니다. GitHub Actions는 Ubuntu 24.04·macOS의 Python 3.9·3.13에서 같은 테스트를 실행합니다. [최신 CI 결과](https://github.com/pqc-master/skills/actions/workflows/tests.yml)를 확인하세요. Windows와 실제 대상 채널의 전체 내보내기는 별도 검증이 필요합니다.
 
 ## 기여 및 라이선스
 

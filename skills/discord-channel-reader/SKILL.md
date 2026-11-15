@@ -7,6 +7,13 @@ description: Discord 서버의 카테고리별 채널 이름·ID를 조회하고
 
 카테고리 ID로 채널을 찾고, 채널 ID로 접근 가능한 대화를 가져온다. Fiesta 문제 마커가 없는 일반 서버·채널에서도 동작한다. 이 스킬은 읽기 전용이며, 대화 내용을 다른 채널에 게시하지 않는다.
 
+## 기본 조회 대상
+
+- 서버 ID: `1563153526283051008`
+- 카테고리 ID: `1563154015389224960`
+
+사용자가 “채널 목록을 보여줘”라고 하면 ID를 다시 묻지 않고 기본 카테고리를 조회한다. 다른 서버·카테고리를 명시하면 그 대상을 우선한다. 대화 내보내기는 선택한 채널 ID가 필요하며, 선택이 없으면 목록을 보여주고 채널을 선택하게 한다. 기본값이 있다는 이유로 카테고리의 모든 대화를 자동 수집하지 않는다.
+
 ## 실행 준비
 
 이 파일 기준 `scripts/discord_reader.py`를 Python 3.9 이상으로 실행한다. 별도 패키지는 필요 없다. 다른 작업 디렉터리에서는 스크립트의 절대 경로를 사용한다.
@@ -22,11 +29,11 @@ python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py doctor
 ## 카테고리의 채널 목록
 
 ```sh
-python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py categories --guild-id GUILD_ID
-python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py channels --category-id CATEGORY_ID
+python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py categories
+python3 /ABSOLUTE/SKILL/PATH/scripts/discord_reader.py channels
 ```
 
-카테고리 ID가 있으면 길드 ID를 별도로 요청하지 않는다. 결과의 채널 이름·ID·유형을 보여준다. 이 목록은 카테고리 바로 아래 채널이며, 채널 안의 스레드는 대화 내보내기에서 찾는다. 목록에 보인다는 사실만으로 메시지를 읽을 수 있다고 가정하지 않는다.
+`categories`는 기본 서버의 카테고리를, `channels`는 기본 카테고리의 채널을 조회한다. 다른 대상은 각각 `--guild-id GUILD_ID`, `--category-id CATEGORY_ID`로 지정한다. 카테고리 ID가 있으면 길드 ID를 별도로 요청하지 않는다. 결과의 채널 이름·ID·유형을 보여준다. 이 목록은 카테고리 바로 아래 채널이며, 채널 안의 스레드는 대화 내보내기에서 찾는다. 목록에 보인다는 사실만으로 메시지를 읽을 수 있다고 가정하지 않는다.
 
 ## 채널의 전체 대화
 

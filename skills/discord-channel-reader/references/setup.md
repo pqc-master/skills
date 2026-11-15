@@ -1,5 +1,11 @@
 # 연결 설정과 조회 범위
 
+## 기본 대상과 인증
+
+`categories`는 서버 `1563153526283051008`, `channels`는 카테고리 `1563154015389224960`을 기본으로 사용한다. `--guild-id` 또는 `--category-id`를 명시하면 해당 값을 사용한다. `export`에는 선택한 `--channel-id`가 항상 필요하다.
+
+이 ID들은 조회 대상이며 인증 정보가 아니다. 각 사용자는 자신의 봇 토큰을 설정하고 해당 서버·채널의 열람 권한을 받아야 한다.
+
 ## 기존 봇 설정 재사용
 
 인증 우선순위는 프로세스 환경변수, 설정 파일 순서다. 파일은 명시한 `--env-file`을 우선 사용하고, 생략하면 `~/.config/discord-channel-reader/.env`, 없으면 `~/.fiesta-discord/.env`를 사용한다. `DISCORD_BOT_TOKEN` 또는 `FIESTA_RELAY_BOT_TOKEN`을 읽는다. 쉘로 파일을 source하지 않는다. POSIX 설정 파일 권한은 600으로 둔다. 전역 `--env-file` 옵션은 하위 명령보다 앞에 둔다.

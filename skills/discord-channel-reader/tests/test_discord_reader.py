@@ -53,6 +53,41 @@ class FakeAPI:
         return result
 
 
+class ListingCLITests(unittest.TestCase):
+    def run_listing(self, command, guild_id, category_id, override=False):
+        api = FakeAPI()
+        category = dict(channel(category_id, 4, None), guild_id=guild_id)
+        child = dict(channel("30", parent=category_id), guild_id=guild_id)
+        api.data[f"/channels/{category_id}"] = category
+        api.data[f"/guilds/{guild_id}/channels"] = [category, child]
+        argv = [command]
+        if override:
+            argv.extend(["--guild-id", guild_id] if command == "categories"
+                        else ["--category-id", category_id])
+        output = io.StringIO()
+        with mock.patch.object(R, "load_token", return_value=("synthetic-token", "test")), \
+                mock.patch.object(R, "DiscordAPI", return_value=api), contextlib.redirect_stdout(output):
+            self.assertEqual(R.main(argv), 0)
+        result = json.loads(output.getvalue())
+        self.assertEqual(result["guild_id"], guild_id)
+        if command == "categories":
+            self.assertEqual([c["id"] for c in result["categories"]], [category_id])
+        else:
+            self.assertEqual(result["category_id"], category_id)
+            self.assertEqual([c["id"] for c in result["channels"]], ["30"])
+        self.assertFalse(any(route.endswith("/messages") for route, _ in api.calls))
+
+    def test_id_free_listing_uses_configured_server_and_category(self):
+        for command in ("categories", "channels"):
+            with self.subTest(command=command):
+                self.run_listing(command, "1563153526283051008", "1563154015389224960")
+
+    def test_explicit_ids_override_defaults(self):
+        for command in ("categories", "channels"):
+            with self.subTest(command=command):
+                self.run_listing(command, "1", "10", override=True)
+
+
 class ExportTests(unittest.TestCase):
     def export(self, api, output, threads=False):
         with mock.patch.object(R, "start_boundary", return_value="1000"):
