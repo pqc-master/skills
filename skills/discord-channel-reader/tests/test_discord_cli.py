@@ -30,9 +30,11 @@ class IsolatedCLITest(unittest.TestCase):
         temporary = tempfile.TemporaryDirectory(prefix="discord-cli-test-")
         self.addCleanup(temporary.cleanup)
         self.scratch = Path(temporary.name)
+        # Windows/OpenSSL needs its OS paths even when application credentials are isolated.
+        system_environment = {key: os.environ[key] for key in ("SystemRoot", "WINDIR") if key in os.environ}
         for patcher in (
             mock.patch.object(sys, "path", [str(SCRIPTS)] + sys.path),
-            mock.patch.dict(os.environ, {}, clear=True),
+            mock.patch.dict(os.environ, system_environment, clear=True),
             mock.patch.object(urllib.request.OpenerDirector, "open", side_effect=AssertionError("No network permitted")),
             mock.patch.object(socket, "create_connection", side_effect=AssertionError("No network permitted")),
         ):

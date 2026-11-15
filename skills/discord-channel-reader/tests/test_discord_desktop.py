@@ -76,9 +76,11 @@ class DesktopSettingsTests(unittest.TestCase):
         self.config_dir = self.home / "settings"
         self.bot_path = self.config_dir / ".env"
         self.publisher_path = self.config_dir / "publisher.json"
+        # Keep Windows/OpenSSL OS paths; all application environment values remain isolated.
+        system_environment = {key: os.environ[key] for key in ("SystemRoot", "WINDIR") if key in os.environ}
         for patcher in (mock.patch.object(Path, "home", return_value=self.home),
                         mock.patch.object(sys, "path", [str(SCRIPTS)] + sys.path),
-                        mock.patch.dict(os.environ, {}, clear=True),
+                        mock.patch.dict(os.environ, system_environment, clear=True),
                         mock.patch.object(urllib.request.OpenerDirector, "open",
                                           side_effect=AssertionError("Offline tests must not reach the network"))):
             patcher.start()
