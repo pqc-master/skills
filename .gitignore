@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+!.env.example
+output/
+exports/
+*.sqlite
+*.sqlite-*
+messages.jsonl
+transcript.md
+metadata.json
+.DS_Store

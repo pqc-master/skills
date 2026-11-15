@@ -1,0 +1,29 @@
+name: Offline skill tests
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discord-reader:
+    name: Discord reader (${{ matrix.os }}, Python ${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python: ['3.9', '3.13']
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Run offline tests without Discord credentials
+        run: python -m unittest discover -s skills/discord-channel-reader/tests -v
+      - name: Check command-line entry point
+        run: python skills/discord-channel-reader/scripts/discord_reader.py --help
